@@ -1,0 +1,5 @@
+terraform-provider-kamatera
+.terraform
+terraform.tfstate*
+.idea
+crash.log
