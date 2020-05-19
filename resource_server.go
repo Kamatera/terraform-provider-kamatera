@@ -110,12 +110,12 @@ func resourceServer() *schema.Resource {
 			},
 			"public_ips": &schema.Schema{
 				Type: schema.TypeList,
-				Elem: schema.TypeString,
+				Elem: &schema.Schema{Type: schema.TypeString,},
 				Computed: true,
 			},
 			"private_ips": &schema.Schema{
 				Type: schema.TypeList,
-				Elem: schema.TypeString,
+				Elem: &schema.Schema{Type: schema.TypeString,},
 				Computed: true,
 			},
 		},

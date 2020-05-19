@@ -21,8 +21,8 @@ data "kamatera_server_options" "B2_2048_monthly" {
   billing_cycle = "monthly"
 }
 
-resource "kamatera_server" "my-server3" {
-  name = "my-server5"
+resource "kamatera_server" "terraformtest" {
+  name = "terraformtest"
   server_options_id = data.kamatera_server_options.B2_2048_monthly.id
   image_id = data.kamatera_image.ubuntu_1804.id
 }

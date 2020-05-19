@@ -1,0 +1,100 @@
+name: CI
+on:
+  push:
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION="$(echo $GITHUB_REF | sed -e 's:refs/tags/::')"
+        else
+          VERSION=0.0.0
+        fi &&\
+        mkdir -p build &&\
+        gobuild() {
+          echo building "${1} ${2}..." &&\
+          if [ "${1}" == "windows" ]; then
+            EXT=".exe"
+          else
+            EXT=""
+          fi &&\
+          GOOS=$1 GOARCH=$2 go build -ldflags "-X main.Version=${VERSION}" -o "build/terraform-provider-kamatera-${VERSION}-${1}-${2}${EXT}" &&\
+          pushd build &&\
+          zip "terraform-provider-kamatera-${VERSION}-${1}-${2}.zip" "terraform-provider-kamatera-${VERSION}-${1}-${2}${EXT}" &&\
+          rm -f "terraform-provider-kamatera-${VERSION}-${1}-${2}${EXT}" &&\
+          popd
+        } &&\
+        gobuild darwin amd64 &&\
+        gobuild freebsd 386 &&\
+        gobuild freebsd amd64 &&\
+        gobuild freebsd arm &&\
+        gobuild linux 386 &&\
+        gobuild linux amd64 &&\
+        gobuild linux arm &&\
+        gobuild openbsd 386 &&\
+        gobuild openbsd amd64 &&\
+        gobuild solaris amd64 &&\
+        gobuild windows 386 &&\
+        gobuild windows amd64
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: build
+        path: build
+  test:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - env:
+          KAMATERA_API_CLIENT_ID: ${{ secrets.KAMATERA_API_CLIENT_ID }}
+          KAMATERA_API_SECRET: ${{ secrets.KAMATERA_API_SECRET }}
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION="$(echo $GITHUB_REF | sed -e 's:refs/tags/::')"
+          else
+            VERSION=0.0.0
+          fi &&\
+          go build -ldflags "-X main.Version=${VERSION}" -o terraform-provider-kamatera &&\
+          curl -sSL https://releases.hashicorp.com/terraform/0.12.25/terraform_0.12.25_linux_amd64.zip -o terraform.zip &&\
+          unzip terraform.zip &&\
+          curl -sSL https://cloudcli.cloudwm.com/binaries/latest/cloudcli-linux-amd64.tar.gz -o cloudcli.tar.gz &&\
+          tar -xzvf cloudcli.tar.gz &&\
+          chmod +x terraform-provider-kamatera terraform cloudcli &&\
+          export PATH=`pwd`:$PATH &&\
+          python3 tests/e2e_test.py
+      - uses: actions/upload-artifact@v1
+        if: always()
+        with:
+          name: tests_output
+          path: tests/output
+  publish:
+    runs-on: ubuntu-18.04
+    needs:
+      - build
+      - test
+    steps:
+      - uses: actions/download-artifact@v1
+        with:
+          name: build
+      - env:
+          KAMATERA_MACHINE_USER_TOKEN: ${{ secrets.KAMATERA_MACHINE_USER_TOKEN }}
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION="$(echo $GITHUB_REF | sed -e 's:refs/tags/::')" &&\
+            RELEASE_ID="$(curl -sL https://api.github.com/repos/Kamatera/terraform-provider-kamatera/releases/tags/${VERSION} | jq -r .id)" &&\
+            echo uploading binaries to release RELEASE_ID=$RELEASE_ID &&\
+            cd build &&\
+            for FILE in `ls *.zip`; do
+              if [ "$(curl -H "Authorization: token $KAMATERA_MACHINE_USER_TOKEN" \
+                           -H "Content-Type: $(file -b --mime-type $FILE)" \
+                           --data-binary @$FILE \
+                           "https://uploads.github.com/repos/Kamatera/terraform-provider-kamatera/releases/${RELEASE_ID}/assets?name=$(basename $FILE)" | tee /dev/stderr | jq -r .state)" == "uploaded" ]; then
+                echo Release asset $FILE uploaded successfuly
+              else
+                echo Failed to upload release asset $FILE
+                exit 1
+              fi
+            done
+          fi

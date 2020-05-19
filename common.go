@@ -52,7 +52,7 @@ func waitCommand(provider ProviderConfiguration, commandId string) (map[string]i
 	startTime := time.Now()
 	time.Sleep(2 * time.Second)
 	for {
-		if startTime.Add(600 * time.Second).Sub(time.Now()) < 0 {
+		if startTime.Add(2400 * time.Second).Sub(time.Now()) < 0 {
 			return nil, errors.New("timeout waiting for Kamatera command to complete")
 		}
 		time.Sleep(2 * time.Second)

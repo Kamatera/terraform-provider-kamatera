@@ -3,3 +3,7 @@ terraform-provider-kamatera
 terraform.tfstate*
 .idea
 crash.log
+tests/output
+build
+cloudcli*
+terraform
