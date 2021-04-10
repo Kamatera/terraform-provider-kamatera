@@ -13,6 +13,15 @@ CLOUDCLI_ARGS = ["--api-clientid", os.environ["KAMATERA_API_CLIENT_ID"], "--api-
 def test_create_server():
     with open("tests/output/main.tf", "w") as f:
         f.write("""
+    terraform {
+      required_providers {
+        kamatera = {
+          source = "kamatera/kamatera"
+          version = "0.0.4"
+        }
+      }
+    }
+
     provider "kamatera" {}
 
     data "kamatera_datacenter" "petach_tikva" {

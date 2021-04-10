@@ -2,6 +2,6 @@
 
 * Install [Golang](https://golang.org/)
 * Clone repo
-* Build: `go build -o terraform-provider-kamatera`
+* Build: `make build`
 * Set the built binary in your PATH
 * Run terraform
