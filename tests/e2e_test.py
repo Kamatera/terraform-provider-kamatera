@@ -79,7 +79,14 @@ def test_create_server():
 def test_stop_server():
     with open("tests/output/main.tf", "w") as f:
         f.write("""
-    provider "kamatera" {}
+    terraform {
+      required_providers {
+        kamatera = {
+          source = "kamatera/kamatera"
+          version = "0.0.4"
+        }
+      }
+    }
 
     data "kamatera_datacenter" "petach_tikva" {
       country = "Israel"
@@ -124,7 +131,14 @@ def test_stop_server():
 def test_change_server_options():
     with open("tests/output/main.tf", "w") as f:
         f.write("""
-    provider "kamatera" {}
+    terraform {
+      required_providers {
+        kamatera = {
+          source = "kamatera/kamatera"
+          version = "0.0.4"
+        }
+      }
+    }
 
     data "kamatera_datacenter" "petach_tikva" {
       country = "Israel"
