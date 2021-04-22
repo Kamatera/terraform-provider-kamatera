@@ -57,7 +57,7 @@ jobs:
             VERSION=0.0.0
           fi &&\
           go build -ldflags "-X main.Version=${VERSION}" -o terraform-provider-kamatera &&\
-          curl -sSL https://releases.hashicorp.com/terraform/0.12.25/terraform_0.12.25_linux_amd64.zip -o terraform.zip &&\
+          curl -sSL https://releases.hashicorp.com/terraform/0.14.10/terraform_0.14.10_linux_amd64.zip -o terraform.zip &&\
           unzip terraform.zip &&\
           curl -sSL https://cloudcli.cloudwm.com/binaries/latest/cloudcli-linux-amd64.tar.gz -o cloudcli.tar.gz &&\
           tar -xzvf cloudcli.tar.gz &&\
