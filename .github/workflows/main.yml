@@ -61,7 +61,7 @@ jobs:
           unzip terraform.zip &&\
           curl -sSL https://cloudcli.cloudwm.com/binaries/latest/cloudcli-linux-amd64.tar.gz -o cloudcli.tar.gz &&\
           tar -xzvf cloudcli.tar.gz &&\
-          chmod +x terraform-provider-kamatera terraform cloudcli &&\
+          chmod +x terraform cloudcli &&\
           export PATH=`pwd`:$PATH &&\
           echo "provider_installation { \
                   filesystem_mirror { \
