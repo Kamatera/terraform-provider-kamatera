@@ -13,6 +13,15 @@ CLOUDCLI_ARGS = ["--api-clientid", os.environ["KAMATERA_API_CLIENT_ID"], "--api-
 def test_create_server():
     with open("tests/output/main.tf", "w") as f:
         f.write("""
+    terraform {
+      required_providers {
+        kamatera = {
+          source = "kamatera/kamatera"
+          version = "0.0.4"
+        }
+      }
+    }
+
     provider "kamatera" {}
 
     data "kamatera_datacenter" "petach_tikva" {
@@ -47,10 +56,8 @@ def test_create_server():
     subprocess.check_call(["terraform", "init", "tests/output"])
     print("Creating server...")
     subprocess.check_call(["terraform", "apply", "-auto-approve", "-input=false", "tests/output"])
-    with open("tests/output/test_create.json", "wb") as f:
-        f.write(subprocess.check_output(["cloudcli", *CLOUDCLI_ARGS, "server", "info", "--format", "json", "--name", "%s.*" % CREATE_SERVER_NAME]))
-    with open("tests/output/test_create.json", "rb") as f:
-        servers_info = json.load(f)
+    output = subprocess.check_output(["cloudcli", *CLOUDCLI_ARGS, "server", "info", "--format", "json", "--name", "%s.*" % CREATE_SERVER_NAME])
+    servers_info = json.loads(output.decode("utf-8"))
     assert len(servers_info) == 1
     server = servers_info[0]
     assert len(server["id"]) > 5
@@ -70,7 +77,14 @@ def test_create_server():
 def test_stop_server():
     with open("tests/output/main.tf", "w") as f:
         f.write("""
-    provider "kamatera" {}
+    terraform {
+      required_providers {
+        kamatera = {
+          source = "kamatera/kamatera"
+          version = "0.0.4"
+        }
+      }
+    }
 
     data "kamatera_datacenter" "petach_tikva" {
       country = "Israel"
@@ -102,10 +116,8 @@ def test_stop_server():
     """.replace("__CREATE_SERVER_NAME__", CREATE_SERVER_NAME))
     print("Stopping server...")
     subprocess.check_call(["terraform", "apply", "-auto-approve", "-input=false", "tests/output"])
-    with open("tests/output/test_stop.json", "wb") as f:
-        f.write(subprocess.check_output(["cloudcli", *CLOUDCLI_ARGS, "server", "info", "--format", "json", "--name", "%s.*" % CREATE_SERVER_NAME]))
-    with open("tests/output/test_stop.json", "rb") as f:
-        servers_info = json.load(f)
+    output = subprocess.check_output(["cloudcli", *CLOUDCLI_ARGS, "server", "info", "--format", "json", "--name", "%s.*" % CREATE_SERVER_NAME])
+    servers_info = json.loads(output.decode("utf-8"))
     assert len(servers_info) == 1
     server = servers_info[0]
     assert server["name"].startswith(CREATE_SERVER_NAME)
@@ -115,7 +127,14 @@ def test_stop_server():
 def test_change_server_options():
     with open("tests/output/main.tf", "w") as f:
         f.write("""
-    provider "kamatera" {}
+    terraform {
+      required_providers {
+        kamatera = {
+          source = "kamatera/kamatera"
+          version = "0.0.4"
+        }
+      }
+    }
 
     data "kamatera_datacenter" "petach_tikva" {
       country = "Israel"
@@ -147,10 +166,8 @@ def test_change_server_options():
     """.replace("__CREATE_SERVER_NAME__", CREATE_SERVER_NAME))
     print("Changing server options...")
     subprocess.check_call(["terraform", "apply", "-auto-approve", "-input=false", "tests/output"])
-    with open("tests/output/test_change_options.json", "wb") as f:
-        f.write(subprocess.check_output(["cloudcli", *CLOUDCLI_ARGS, "server", "info", "--format", "json", "--name", "%s.*" % CREATE_SERVER_NAME]))
-    with open("tests/output/test_change_options.json", "rb") as f:
-        servers_info = json.load(f)
+    output = subprocess.check_output(["cloudcli", *CLOUDCLI_ARGS, "server", "info", "--format", "json", "--name", "%s.*" % CREATE_SERVER_NAME])
+    servers_info = json.loads(output.decode("utf-8"))
     assert len(servers_info) == 1
     server = servers_info[0]
     assert server["cpu"] == "1B"

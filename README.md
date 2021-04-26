@@ -5,10 +5,12 @@
 * [Install terraform](https://www.terraform.io/docs/index.html) (version 0.12 or higher)
 * Download the Kamatera provider for your OS/architecture from [latest release](https://github.com/Kamatera/terraform-provider-kamatera/releases)
 * Unzip and place the binary in your PATH named `terraform-provider-kamatera`, for example:
-  * `unzip terraform-provider-kamatera-0.0.3-linux-amd64.zip`
-  * `sudo mv terraform-provider-kamatera-0.0.3-linux-amd64 /usr/local/bin/terraform-provider-kamatera`
+  * `unzip terraform-provider-kamatera-0.0.4-linux-amd64.zip`
+  * `sudo mv terraform-provider-kamatera-0.0.4-linux-amd64 /usr/local/bin/terraform-provider-kamatera`
 
 ## Usage
+
+### 0.12 and earlier
 
 Set environment variables
 

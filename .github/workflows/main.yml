@@ -56,13 +56,19 @@ jobs:
           else
             VERSION=0.0.0
           fi &&\
-          go build -ldflags "-X main.Version=${VERSION}" -o terraform-provider-kamatera &&\
-          curl -sSL https://releases.hashicorp.com/terraform/0.12.25/terraform_0.12.25_linux_amd64.zip -o terraform.zip &&\
+          make build &&\
+          curl -sSL https://releases.hashicorp.com/terraform/0.14.10/terraform_0.14.10_linux_amd64.zip -o terraform.zip &&\
           unzip terraform.zip &&\
           curl -sSL https://cloudcli.cloudwm.com/binaries/latest/cloudcli-linux-amd64.tar.gz -o cloudcli.tar.gz &&\
           tar -xzvf cloudcli.tar.gz &&\
-          chmod +x terraform-provider-kamatera terraform cloudcli &&\
+          chmod +x terraform cloudcli &&\
           export PATH=`pwd`:$PATH &&\
+          echo "provider_installation { \
+                  filesystem_mirror { \
+                    path    = \"$HOME/.terraform.d/plugins_local\" \
+                    include = [\"registry.terraform.io/kamatera/kamatera\"] \
+                  } \
+                }" > ~/.terraformrc &&\
           python3 tests/e2e_test.py
       - uses: actions/upload-artifact@v1
         if: always()
