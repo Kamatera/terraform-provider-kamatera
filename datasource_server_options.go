@@ -3,8 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func dataSourceServerOptions() *schema.Resource {
@@ -37,15 +38,27 @@ func dataSourceServerOptions() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			// TODO: Remove deprecated field.
 			"disk_size_gb": &schema.Schema{
 				Type:     schema.TypeFloat,
 				Optional: true,
+				Deprecated: "Use disks instead",
 			},
+			// TODO: Remove deprecated field.
 			"extra_disk_sizes_gb": &schema.Schema{
 				Type:     schema.TypeList,
 				Elem:     &schema.Schema{Type: schema.TypeFloat,},
 				MaxItems: 3,
 				Optional: true,
+				Deprecated: "Use disks instead",
+			},
+			"disks": {
+				Type: schema.TypeList,
+				Elem: &schema.Schema{Type: schema.TypeString},
+				MinItems: 1,
+				MaxItems: 4,
+				Optional: true,
+				Default: []string{"10GB"},
 			},
 		},
 	}
