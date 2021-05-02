@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/hashicorp/go-cleanhttp"
 )
 
 func kamateraRequest(provider ProviderConfiguration, method string, path string, body interface{}) (interface{}, error) {
@@ -21,7 +23,7 @@ func kamateraRequest(provider ProviderConfiguration, method string, path string,
 	req.Header.Add("AuthSecret", provider.ApiSecret)
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	client := &http.Client{}
+	client := cleanhttp.DefaultClient()
 	res, e := client.Do(req)
 	if e != nil {
 		return nil, e
