@@ -78,7 +78,11 @@ func DataSourceServerOptionsRead(d *schema.ResourceData, m interface{}) error {
 	serverOptions := result.(map[string]interface{})
 	cpuTypes := serverOptions["cpuTypes"].([]interface{})
 	monthlyTrafficPackage := serverOptions["monthlyTrafficPackage"].(map[string]interface{})
-	diskSizeGB := serverOptions["diskSizeGB"].([]float64)
+
+	var diskSizeGB []float64
+	for _, v := range serverOptions["diskSizeGB"].([]interface{}) {
+		diskSizeGB = append(diskSizeGB, v.(float64))
+	}
 	defaultMonthlyTrafficPackage := serverOptions["defaultMonthlyTrafficPackage"].(string)
 	var availableCpuTypes []string
 	validCpuType := false
