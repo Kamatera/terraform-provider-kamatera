@@ -3,9 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/kamatera/terraform-provider-kamatera/disk/helper"
 )
 
 func dataSourceServerOptions() *schema.Resource {
@@ -30,9 +32,9 @@ func dataSourceServerOptions() *schema.Resource {
 				Optional: true,
 			},
 			"billing_cycle": &schema.Schema{
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Optional: true,
-				Default: "hourly",
+				Default:  "hourly",
 			},
 			"monthly_traffic_package": &schema.Schema{
 				Type:     schema.TypeString,
@@ -40,21 +42,21 @@ func dataSourceServerOptions() *schema.Resource {
 			},
 			// TODO: Remove deprecated field.
 			"disk_size_gb": &schema.Schema{
-				Type:     schema.TypeFloat,
-				Optional: true,
+				Type:       schema.TypeFloat,
+				Optional:   true,
 				Deprecated: "Use disks instead",
 			},
 			// TODO: Remove deprecated field.
 			"extra_disk_sizes_gb": &schema.Schema{
-				Type:     schema.TypeList,
-				Elem:     &schema.Schema{Type: schema.TypeFloat,},
-				MaxItems: 3,
-				Optional: true,
+				Type:       schema.TypeList,
+				Elem:       &schema.Schema{Type: schema.TypeFloat},
+				MaxItems:   3,
+				Optional:   true,
 				Deprecated: "Use disks instead",
 			},
 			"disks": {
-				Type: schema.TypeList,
-				Elem: &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 				MinItems: 1,
 				MaxItems: 4,
 				Optional: true,
@@ -76,7 +78,7 @@ func DataSourceServerOptionsRead(d *schema.ResourceData, m interface{}) error {
 	serverOptions := result.(map[string]interface{})
 	cpuTypes := serverOptions["cpuTypes"].([]interface{})
 	monthlyTrafficPackage := serverOptions["monthlyTrafficPackage"].(map[string]interface{})
-	diskSizeGB := serverOptions["diskSizeGB"].([]interface{})
+	diskSizeGB := serverOptions["diskSizeGB"].([]float64)
 	defaultMonthlyTrafficPackage := serverOptions["defaultMonthlyTrafficPackage"].(string)
 	var availableCpuTypes []string
 	validCpuType := false
@@ -115,7 +117,7 @@ func DataSourceServerOptionsRead(d *schema.ResourceData, m interface{}) error {
 			validMonthlyTrafficPackage = true
 		}
 	}
-	if ! validMonthlyTrafficPackage && d.Get("monthly_traffic_package").(string) == "" {
+	if !validMonthlyTrafficPackage && d.Get("monthly_traffic_package").(string) == "" {
 		if d.Get("billing_cycle").(string) == "monthly" {
 			d.Set("monthly_traffic_package", defaultMonthlyTrafficPackage)
 		}
@@ -124,20 +126,21 @@ func DataSourceServerOptionsRead(d *schema.ResourceData, m interface{}) error {
 	if d.Get("billing_cycle").(string) == "hourly" && d.Get("monthly_traffic_package") != "" {
 		return errors.New("for hourly billing cycle, monthly traffic package must not be set")
 	}
-	var availableDiskSizesGB []string
-	validDiskSizeGB := 0
-	for _, sizeGb := range diskSizeGB {
-		availableDiskSizesGB = append(availableDiskSizesGB, fmt.Sprintf("%v", sizeGb.(float64)))
-		if sizeGb.(float64) == d.Get("disk_size_gb").(float64) {
-			validDiskSizeGB ++
-		}
-		for _, extraDiskSizeGB := range d.Get("extra_disk_sizes_gb").([]interface{}) {
-			if sizeGb.(float64) == extraDiskSizeGB.(float64) {
-				validDiskSizeGB ++
-			}
+
+	disks := d.Get("disks").([]string)
+	var disksFloat64 []float64
+	for _, d := range disks {
+		d = strings.TrimSuffix(d, "GB")
+		d = strings.TrimSuffix(d, "gb")
+		d = strings.TrimSuffix(d, "TB")
+		d = strings.TrimSuffix(d, "tb")
+		if val, err := strconv.ParseFloat(d, 64); err == nil {
+			disksFloat64 = append(disksFloat64, val)
 		}
 	}
-	if validCpuType && validMonthlyTrafficPackage && validDiskSizeGB >= 1 + len(d.Get("extra_disk_sizes_gb").([]interface{})) {
+	validDisk := helper.Subslice(disksFloat64, diskSizeGB)
+
+	if validCpuType && validMonthlyTrafficPackage && validDisk {
 		id := []string{
 			d.Get("datacenter_id").(string),
 			d.Get("cpu_type").(string),
@@ -145,19 +148,17 @@ func DataSourceServerOptionsRead(d *schema.ResourceData, m interface{}) error {
 			fmt.Sprintf("%v", d.Get("ram_mb").(float64)),
 			d.Get("billing_cycle").(string),
 			d.Get("monthly_traffic_package").(string),
-			fmt.Sprintf("%v", d.Get("disk_size_gb").(float64)),
 		}
-		for _, extra_disk_size_gb := range d.Get("extra_disk_sizes_gb").([]interface{}) {
-			id = append(id, fmt.Sprintf("%v", extra_disk_size_gb))
-		}
+		id = append(id, disks...)
 		d.SetId(strings.Join(id, ","))
 		return nil
-	} else {
-		d.SetId("")
-		return errors.New(fmt.Sprintf("invalid server options, available options:\n\n%s\n\n%s\n\ndisk_size_gb/extra_disk_sizes_gb=[%s]",
-			strings.Join(availableCpuTypes, "\n\n"),
-			strings.Join(availableMonthlyTrafficPackages, "\n"),
-			strings.Join(availableDiskSizesGB, ", "),
-			))
 	}
+
+	d.SetId("")
+	return errors.New(fmt.Sprintf("invalid server options, available options:\n\n%s\n\n%s\n\ndisks=[%s]",
+		strings.Join(availableCpuTypes, "\n\n"),
+		strings.Join(availableMonthlyTrafficPackages, "\n"),
+		strings.Join(disks, ", "),
+	))
+
 }
