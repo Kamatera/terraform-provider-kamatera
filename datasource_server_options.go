@@ -58,7 +58,7 @@ func dataSourceServerOptions() *schema.Resource {
 				MinItems: 1,
 				MaxItems: 4,
 				Optional: true,
-				Default: []string{"10GB"},
+				Default: []interface{}{"10GB"},
 			},
 		},
 	}
