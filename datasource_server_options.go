@@ -156,8 +156,8 @@ func DataSourceServerOptionsRead(d *schema.ResourceData, m interface{}) error {
 
 		{
 			var sDisks []string
-			for _, d := range disks {
-				sDisks = append(sDisks, d.(string))
+			for _, d := range disksFloat64 {
+				sDisks = append(sDisks, fmt.Sprintf("%f", d))
 			}
 			id = append(id, sDisks...)
 		}
