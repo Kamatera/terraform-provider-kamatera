@@ -131,14 +131,14 @@ func DataSourceServerOptionsRead(d *schema.ResourceData, m interface{}) error {
 		return errors.New("for hourly billing cycle, monthly traffic package must not be set")
 	}
 
-	disks := d.Get("disks").([]string)
+	disks := d.Get("disks").([]interface{})
 	var disksFloat64 []float64
 	for _, d := range disks {
-		d = strings.TrimSuffix(d, "GB")
-		d = strings.TrimSuffix(d, "gb")
-		d = strings.TrimSuffix(d, "TB")
-		d = strings.TrimSuffix(d, "tb")
-		if val, err := strconv.ParseFloat(d, 64); err == nil {
+		d = strings.TrimSuffix(d.(string), "GB")
+		d = strings.TrimSuffix(d.(string), "gb")
+		d = strings.TrimSuffix(d.(string), "TB")
+		d = strings.TrimSuffix(d.(string), "tb")
+		if val, err := strconv.ParseFloat(d.(string), 64); err == nil {
 			disksFloat64 = append(disksFloat64, val)
 		}
 	}
@@ -153,16 +153,23 @@ func DataSourceServerOptionsRead(d *schema.ResourceData, m interface{}) error {
 			d.Get("billing_cycle").(string),
 			d.Get("monthly_traffic_package").(string),
 		}
-		id = append(id, disks...)
+
+		{
+			var sDisks []string
+			for _, d := range disks {
+				sDisks = append(sDisks, d.(string))
+			}
+			id = append(id, sDisks...)
+		}
 		d.SetId(strings.Join(id, ","))
 		return nil
 	}
 
 	d.SetId("")
-	return errors.New(fmt.Sprintf("invalid server options, available options:\n\n%s\n\n%s\n\ndisks=[%s]",
+	return errors.New(fmt.Sprintf("invalid server options, available options:\n\n%s\n\n%s\n\ndisks=%v",
 		strings.Join(availableCpuTypes, "\n\n"),
 		strings.Join(availableMonthlyTrafficPackages, "\n"),
-		strings.Join(disks, ", "),
+		disks,
 	))
 
 }
