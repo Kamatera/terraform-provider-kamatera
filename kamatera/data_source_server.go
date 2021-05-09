@@ -12,7 +12,7 @@ import (
 
 func dataSourceServer() *schema.Resource {
 	return &schema.Resource{
-		// ReadContext: dataSourceCoffeesRead,
+		ReadContext: dataSourceServerRead,
 
 		Schema: map[string]*schema.Schema{
 			"id": {
