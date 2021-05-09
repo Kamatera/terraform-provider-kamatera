@@ -12,7 +12,11 @@ import (
 	"github.com/kamatera/terraform-provider-kamatera/kamatera"
 )
 
-func request(provider kamatera.ProviderConfiguration, method string, path string, body interface{}) (interface{}, error) {
+func Request(provider *kamatera.ProviderConfig, method string, path string, body interface{}) (interface{}, error) {
+	if provider == nil {
+		return nil, errors.New("no provider")
+	}
+
 	buf := new(bytes.Buffer)
 	if body != nil {
 		if err := json.NewEncoder(buf).Encode(body); err != nil {
@@ -48,18 +52,18 @@ func request(provider kamatera.ProviderConfiguration, method string, path string
 	return result, nil
 }
 
-func waitCommand(provider kamatera.ProviderConfiguration, commandID string) (map[string]interface{}, error) {
+func WaitCommand(provider kamatera.ProviderConfiguration, commandID string) (map[string]interface{}, error) {
 	startTime := time.Now()
 	time.Sleep(2 * time.Second)
 
 	for {
-		if startTime.Add(2400*time.Second).Sub(time.Now()) < 0 {
+		if startTime.Add(40*time.Minute).Sub(time.Now()) < 0 {
 			return nil, errors.New("timeout waiting for Kamatera command to complete")
 		}
 
 		time.Sleep(2 * time.Second)
 
-		result, e := request(provider, "GET", fmt.Sprintf("service/queue?id=%s", commandID), nil)
+		result, e := Request(provider, "GET", fmt.Sprintf("service/queue?id=%s", commandID), nil)
 		if e != nil {
 			return nil, e
 		}
