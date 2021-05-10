@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/kamatera/terraform-provider-kamatera/kamatera/helper"
 )
 
 func dataSourceServer() *schema.Resource {
@@ -212,7 +211,7 @@ func dataSourceServerCreate(ctx context.Context, d *schema.ResourceData, m inter
 		MonthlyPackage:   d.Get("monthly_traffic_package").(string),
 		PowerOn:          powerOn,
 	}
-	result, err := helper.Request(provider, "POST", "service/server", body)
+	result, err := request(provider, "POST", "service/server", body)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -232,7 +231,7 @@ func dataSourceServerCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	commandID := commandIDs[0].(string)
-	command, err := helper.WaitCommand(provider, commandID)
+	command, err := waitCommand(provider, commandID)
 	if err != nil {
 		diag.FromErr(err)
 	}
@@ -264,7 +263,7 @@ func dataSourceServerRead(ctx context.Context, d *schema.ResourceData, m interfa
 	} else {
 		body = listServersPostValues{ID: d.Get("internal_server_id").(string)}
 	}
-	result, err := helper.Request(provider, "POST", fmt.Sprintf("service/server/info"), body)
+	result, err := request(provider, "POST", fmt.Sprintf("service/server/info"), body)
 	if err != nil {
 		return diag.FromErr(err)
 	}

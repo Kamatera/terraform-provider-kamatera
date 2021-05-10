@@ -1,4 +1,4 @@
-package helper
+package kamatera
 
 import (
 	"bytes"
@@ -9,10 +9,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/kamatera/terraform-provider-kamatera/kamatera"
 )
 
-func Request(provider *kamatera.ProviderConfig, method string, path string, body interface{}) (interface{}, error) {
+func request(provider *ProviderConfig, method string, path string, body interface{}) (interface{}, error) {
 	if provider == nil {
 		return nil, errors.New("no provider")
 	}
@@ -52,7 +51,7 @@ func Request(provider *kamatera.ProviderConfig, method string, path string, body
 	return result, nil
 }
 
-func WaitCommand(provider *kamatera.ProviderConfig, commandID string) (map[string]interface{}, error) {
+func waitCommand(provider *ProviderConfig, commandID string) (map[string]interface{}, error) {
 	if provider == nil {
 		return nil, errors.New("no provider")
 	}
@@ -67,7 +66,7 @@ func WaitCommand(provider *kamatera.ProviderConfig, commandID string) (map[strin
 
 		time.Sleep(2 * time.Second)
 
-		result, e := Request(provider, "GET", fmt.Sprintf("service/queue?id=%s", commandID), nil)
+		result, e := request(provider, "GET", fmt.Sprintf("service/queue?id=%s", commandID), nil)
 		if e != nil {
 			return nil, e
 		}
