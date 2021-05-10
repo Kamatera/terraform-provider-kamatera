@@ -23,12 +23,36 @@ func dataSourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"datacenter_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
 			"cpu_type": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 			"cpu_cores": {
 				Type:     schema.TypeFloat,
+				Optional: true,
+			},
+			"ram_mb": &schema.Schema{
+				Type:     schema.TypeFloat,
+				Optional: true,
+			},
+			"disk_sizes_gb": &schema.Schema{
+				Type:     schema.TypeList,
+				Elem:     &schema.Schema{Type: schema.TypeFloat},
+				MinItems: 1,
+				MaxItems: 4,
+				Optional: true,
+			},
+			"billing_cycle": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "hourly",
+			},
+			"monthly_traffic_package": &schema.Schema{
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 			"power_on": {
@@ -151,26 +175,28 @@ func dataSourceServerRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	d.Set("id", server["id"].(string))
 
-	name := server["name"].(string)
-	d.Set("name", name)
+	d.Set("name", server["name"].(string))
 
 	cpu := server["cpu"].(string)
 	d.Set("cpu_type", cpu[1:2])
 	d.Set("cpu_cores", cpu[0:1])
-	diskSizes := server["diskSizes"].([]interface{})
 
-	power := server["power"].(string)
-	d.Set("power_on", power == "on")
+	{
+		diskSizes := server["diskSizes"].([]interface{})
+		var diskSizesString []string
+		for _, v := range diskSizes {
+			diskSizesString = append(diskSizesString, v.(string))
+		}
+		d.Set("disk_sizes_gb", diskSizesString)
+	}
 
-	datacenter := server["datacenter"].(string)
-	ram := server["ram"].(float64)
-	backup := server["backup"].(string)
-	managed := server["managed"].(string)
-	billing := server["billing"].(string)
-	traffic := server["traffic"].(string)
-
-	d.Set("managed", managed == "1")
-	d.Set("daily_backup", backup == "1")
+	d.Set("power_on", server["power"].(string) == "on")
+	d.Set("datacenter_id", server["datacenter"].(string))
+	d.Set("ram_mb", server["ram"].(float64))
+	d.Set("daily_backup", server["backup"].(string) == "1")
+	d.Set("managed", server["managed"].(string) == "1")
+	d.Set("billing_cycle", server["billing"].(string))
+	d.Set("monthly_traffic_package", server["traffic"].(string))
 	d.Set("internal_server_id", server["id"].(string))
 	d.Set("price_monthly_on", server["priceMonthlyOn"].(string))
 	d.Set("price_hourly_on", server["priceHourlyOn"].(string))
