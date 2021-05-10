@@ -12,6 +12,7 @@ import (
 
 func dataSourceServer() *schema.Resource {
 	return &schema.Resource{
+		CreateContext: dataSourceServerCreate,
 		ReadContext: dataSourceServerRead,
 
 		Schema: map[string]*schema.Schema{
@@ -36,7 +37,7 @@ func dataSourceServer() *schema.Resource {
 				Optional: true,
 			},
 			"ram_mb": &schema.Schema{
-				Type:     schema.TypeFloat,
+				Type:     schema.TypeInt,
 				Optional: true,
 			},
 			"disk_sizes_gb": &schema.Schema{
@@ -153,6 +154,107 @@ func dataSourceServer() *schema.Resource {
 	}
 }
 
+func dataSourceServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
+	provider := m.(*ProviderConfig)
+
+	password := d.Get("password").(string)
+	if password == "" {
+		password = "__generate__"
+	}
+
+	dailyBackup := "no"
+	if d.Get("daily_backup").(bool) {
+		dailyBackup = "yes"
+	}
+
+	managed := "no"
+	if d.Get("managed").(bool) {
+		managed = "yes"
+	}
+
+	var networks []string
+	for _, network := range d.Get("network").([]interface{}) {
+		network := network.(map[string]interface{})
+		networks = append(networks, fmt.Sprintf("name=%s,ip=%s", network["name"].(string), network["ip"].(string)))
+	}
+	if len(networks) == 0 {
+		networks = append(networks, "name=wan,ip=auto")
+	}
+
+	powerOn := "no"
+	if d.Get("power_on").(bool) {
+		powerOn = "yes"
+	}
+
+	var diskSizesGB []string
+	{
+		diskSizes := d.Get("disk_sizes_gb").([]interface{})
+		for _, v := range diskSizes {
+			diskSizesGB = append(diskSizesGB, v.(string))
+		}
+	}
+
+	body := &createServerPostValues{
+		Name:             d.Get("name").(string),
+		Password:         password,
+		PasswordValidate: password,
+		SSHKey:           d.Get("ssh_pubkey").(string),
+		Datacenter:       d.Get("datacenter_id").(string),
+		Image:            d.Get("image_id").(string),
+		CPU:              fmt.Sprintf("%v%v", d.Get("cpu_cores"), d.Get("cpu_type")),
+		RAM:              d.Get("ram_mb").(int64),
+		Disk:             strings.Join(diskSizesGB, " "),
+		DailyBackup:      dailyBackup,
+		Managed:          managed,
+		Network:          strings.Join(networks, " "),
+		Quantity:         "1",
+		BillingCycle:     d.Get("billing_cycle").(string),
+		MonthlyPackage:   d.Get("monthly_traffic_package").(string),
+		PowerOn:          powerOn,
+	}
+	result, err := helper.Request(provider, "POST", "service/server", body)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	var commandIDs []interface{}
+	if password == "__generate__" {
+		response := result.(map[string]interface{})
+		d.Set("generated_password", response["password"].(string))
+		commandIDs = response["commandIds"].([]interface{})
+	} else {
+		d.Set("generated_password", "")
+		commandIDs = result.([]interface{})
+	}
+
+	if len(commandIDs) != 1 {
+		return diag.Errorf("invalid response from Kamatera API: did not return expected command ID")
+	}
+
+	commandID := commandIDs[0].(string)
+	command, err := helper.WaitCommand(provider, commandID)
+	if err != nil {
+		diag.FromErr(err)
+	}
+
+	createLog, hasCreateLog := command["log"]
+	if !hasCreateLog {
+		return diag.Errorf("invalid response from Kamatera API: command is missing creation log")
+	}
+
+	createdServerName := ""
+	for _, line := range strings.Split(createLog.(string), "\n") {
+		if strings.HasPrefix(line, "Name: ") {
+			createdServerName = strings.Replace(line, "Name: ", "", 1)
+		}
+	}
+	if createdServerName == "" {
+		return diag.Errorf("invalid response from Kamatera API: failed to get created server name")
+	}
+	d.SetId(createdServerName)
+	return dataSourceServerCreate(ctx, d, m)
+}
+
 func dataSourceServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	provider := m.(*ProviderConfig)
 	var body listServersPostValues
@@ -192,7 +294,7 @@ func dataSourceServerRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	d.Set("power_on", server["power"].(string) == "on")
 	d.Set("datacenter_id", server["datacenter"].(string))
-	d.Set("ram_mb", server["ram"].(float64))
+	d.Set("ram_mb", server["ram"].(int64))
 	d.Set("daily_backup", server["backup"].(string) == "1")
 	d.Set("managed", server["managed"].(string) == "1")
 	d.Set("billing_cycle", server["billing"].(string))

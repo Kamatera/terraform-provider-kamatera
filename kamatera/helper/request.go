@@ -52,7 +52,11 @@ func Request(provider *kamatera.ProviderConfig, method string, path string, body
 	return result, nil
 }
 
-func WaitCommand(provider kamatera.ProviderConfiguration, commandID string) (map[string]interface{}, error) {
+func WaitCommand(provider *kamatera.ProviderConfig, commandID string) (map[string]interface{}, error) {
+	if provider == nil {
+		return nil, errors.New("no provider")
+	}
+
 	startTime := time.Now()
 	time.Sleep(2 * time.Second)
 
