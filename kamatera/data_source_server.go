@@ -13,6 +13,7 @@ func dataSourceServer() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: dataSourceServerCreate,
 		ReadContext: dataSourceServerRead,
+		DeleteContext: dataSourceServerDelete,
 
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -325,4 +326,32 @@ func dataSourceServerRead(ctx context.Context, d *schema.ResourceData, m interfa
 	d.Set("attached_networks", attachedNetworks)
 
 	return
+}
+
+func dataSourceServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	provider := m.(*ProviderConfig)
+	err := serverPowerOperation(provider, d.Get("internal_server_id").(string), "terminate")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
+}
+
+func serverPowerOperation(provider *ProviderConfig, internalServerId string, operation string) error {
+	var body powerOperationServerPostValues
+	if operation == "terminate" {
+		body = powerOperationServerPostValues{ID: internalServerId, Force: true}
+	} else {
+		body = powerOperationServerPostValues{ID: internalServerId}
+	}
+
+	result, err := request(provider, "POST", fmt.Sprintf("service/server/%s", operation), body)
+	if err != nil {
+		return err
+	}
+
+	commandIds := result.([]interface{})
+	_, err = waitCommand(provider, commandIds[0].(string))
+	return err
 }

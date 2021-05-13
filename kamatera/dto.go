@@ -23,3 +23,8 @@ type createServerPostValues struct {
 	MonthlyPackage   string `json:"monthlypackage"`
 	PowerOn          string `json:"poweronaftercreate"`
 }
+
+type powerOperationServerPostValues struct {
+	ID string `json:"id"`
+	Force bool `json:"force"`
+}
