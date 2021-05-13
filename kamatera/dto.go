@@ -25,6 +25,6 @@ type createServerPostValues struct {
 }
 
 type powerOperationServerPostValues struct {
-	ID string `json:"id"`
-	Force bool `json:"force"`
+	ID    string `json:"id"`
+	Force bool   `json:"force"`
 }

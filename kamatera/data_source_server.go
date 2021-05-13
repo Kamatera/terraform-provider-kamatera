@@ -12,7 +12,7 @@ import (
 func dataSourceServer() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: dataSourceServerCreate,
-		ReadContext: dataSourceServerRead,
+		ReadContext:   dataSourceServerRead,
 		DeleteContext: dataSourceServerDelete,
 
 		Schema: map[string]*schema.Schema{
@@ -24,7 +24,7 @@ func dataSourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"datacenter_id": &schema.Schema{
+			"datacenter_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -36,23 +36,23 @@ func dataSourceServer() *schema.Resource {
 				Type:     schema.TypeFloat,
 				Optional: true,
 			},
-			"ram_mb": &schema.Schema{
+			"ram_mb": {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			"disk_sizes_gb": &schema.Schema{
+			"disk_sizes_gb": {
 				Type:     schema.TypeList,
 				Elem:     &schema.Schema{Type: schema.TypeFloat},
 				MinItems: 1,
 				MaxItems: 4,
 				Optional: true,
 			},
-			"billing_cycle": &schema.Schema{
+			"billing_cycle": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "hourly",
 			},
-			"monthly_traffic_package": &schema.Schema{
+			"monthly_traffic_package": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
