@@ -13,7 +13,7 @@ import (
 
 func request(provider *ProviderConfig, method string, path string, body interface{}) (interface{}, error) {
 	if provider == nil {
-		return nil, errors.New("no provider")
+		return nil, noProviderErr
 	}
 
 	buf := new(bytes.Buffer)
@@ -51,9 +51,53 @@ func request(provider *ProviderConfig, method string, path string, body interfac
 	return result, nil
 }
 
+func postServerConfigure(provider *ProviderConfig, postValues configureServerPostValues) error {
+	if provider == nil {
+		return noProviderErr
+	}
+
+	result, err := request(provider, "POST", "server/configure", postValues)
+	if err != nil {
+		return err
+	}
+
+	commandIds := result.([]interface{})
+	_, err = waitCommand(provider, commandIds[0].(string))
+	return err
+}
+
+func serverChangePassword(provider *ProviderConfig, internalServerID string, password string) error {
+	result, err := request(provider, "POST", "service/server/password", changePasswordServerPostValues{ID: internalServerID, Password: password})
+	if err != nil {
+		return err
+	}
+
+	commandIds := result.([]interface{})
+	_, err = waitCommand(provider, commandIds[0].(string))
+
+	return err
+}
+
+func renameServer(provider *ProviderConfig, internalServerID string, name string) error {
+	result, err := request(
+		provider,
+		"POST",
+		fmt.Sprintf("service/server/rename"),
+		renameServerPostValues{ID: internalServerID, NewName: name},
+	)
+	if err != nil {
+		return err
+	}
+
+	commandIds := result.([]interface{})
+	_, err = waitCommand(provider, commandIds[0].(string))
+
+	return err
+}
+
 func waitCommand(provider *ProviderConfig, commandID string) (map[string]interface{}, error) {
 	if provider == nil {
-		return nil, errors.New("no provider")
+		return nil, noProviderErr
 	}
 
 	startTime := time.Now()

@@ -3,6 +3,7 @@ package kamatera
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -13,6 +14,7 @@ func dataSourceServer() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: dataSourceServerCreate,
 		ReadContext:   dataSourceServerRead,
+		UpdateContext: dataSourceServerUpdate,
 		DeleteContext: dataSourceServerDelete,
 
 		Schema: map[string]*schema.Schema{
@@ -328,9 +330,136 @@ func dataSourceServerRead(ctx context.Context, d *schema.ResourceData, m interfa
 	return
 }
 
+func dataSourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
+	newCPU := ""
+	{
+		newCPUType := ""
+		if d.HasChange("cpu_type") {
+			_, n := d.GetChange("cpu_type")
+			newCPUType = n.(string)
+		}
+		newCPUCores := ""
+		if d.HasChange("cpu_cores") {
+			_, n := d.GetChange("cpu_cores")
+			newCPUCores = n.(string)
+		}
+		newCPU = newCPUCores+newCPUType
+	}
+
+	var newRAM int64
+	if d.HasChange("ram_mb") {
+		_, n := d.GetChange("ram_mb")
+		newRAM = n.(int64)
+	}
+
+	if d.HasChange("image_id") {
+		// TODO: Implement
+		return diag.Errorf("changing server image is not supported yet")
+	}
+
+	if d.HasChange("network") {
+		// TODO: Implement
+		return diag.Errorf("changing server networks is not supported yet")
+	}
+
+	if d.HasChange("ssh_pubkey") {
+		// TODO: implement
+		return diag.Errorf("changing server ssh_pubkey is not supported yet")
+	}
+
+	oldBillingCycle := ""
+	newBillingCycle := ""
+	if d.HasChange("billing_cycle") {
+		o, n := d.GetChange("billing_cycle")
+		oldBillingCycle = o.(string)
+		newBillingCycle = n.(string)
+	}
+
+	oldTrafficPackage := ""
+	newTrafficPackage := ""
+	if d.HasChange("monthly_traffic_package") {
+		o, n := d.GetChange("monthly_traffic_package")
+		oldTrafficPackage = o.(string)
+		newTrafficPackage = n.(string)
+	}
+
+	if d.HasChange("datacenter_id") {
+		return diag.Errorf("changing datacenter is not supported yet")
+	}
+
+	if d.HasChange("disk_sizes_gb") {
+		// TODO: implement
+		return diag.Errorf("changing disk sizes is not supported yet")
+	}
+
+	newDailyBackup := ""
+	if d.HasChange("daily_backup") {
+		newDailyBackup = "no"
+		if d.Get("daily_backup").(bool) {
+			newDailyBackup = "yes"
+		}
+	}
+
+	newManaged := ""
+	if d.HasChange("managed") {
+		newManaged = "no"
+		if d.Get("managed").(bool) {
+			newManaged = "yes"
+		}
+	}
+
+	provider := m.(*ProviderConfig)
+	if err := serverConfigure(
+		provider,
+		d.Get("internal_server_id").(string),
+		newCPU,
+		strconv.FormatInt(newRAM, 10),
+		oldTrafficPackage, newTrafficPackage,
+		oldBillingCycle, newBillingCycle,
+		newDailyBackup,
+		newManaged,
+	); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if d.HasChange("password"){
+		old, new := d.GetChange("password")
+
+		err := serverChangePassword(provider, d.Get("internal_server_id").(string), new.(string))
+		if err != nil {
+			d.Set("password", old)
+			return diag.FromErr(err)
+		}
+
+		d.Set("password", new)
+	}
+
+	if d.HasChange("name"){
+		_, new := d.GetChange("name")
+		if err := renameServer(provider, d.Get("internal_server_id").(string), new.(string)); err != nil {
+			return diag.FromErr(err)
+		}
+		d.Set("name", new)
+	}
+
+	if d.HasChange("power_on") {
+		if d.Get("power_on").(bool) {
+			if err := changeServerPower(provider, d.Get("internal_server_id").(string), "poweron"); err != nil {
+				return diag.FromErr(err)
+			}
+		} else {
+			if err := changeServerPower(provider, d.Get("internal_server_id").(string), "poweroff"); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	return dataSourceServerRead(ctx, d, m)
+}
+
 func dataSourceServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	provider := m.(*ProviderConfig)
-	err := serverPowerOperation(provider, d.Get("internal_server_id").(string), "terminate")
+	err := changeServerPower(provider, d.Get("internal_server_id").(string), "terminate")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -338,12 +467,73 @@ func dataSourceServerDelete(ctx context.Context, d *schema.ResourceData, m inter
 	return nil
 }
 
-func serverPowerOperation(provider *ProviderConfig, internalServerId string, operation string) error {
+func serverConfigure(
+	provider *ProviderConfig, internalServerId string, newCpu string, newRam string,
+	oldTrafficPackage string, newTrafficPackage string, oldBillingCycle string, newBillingCycle string,
+	newDailyBackup string, newManaged string,
+) error {
+	if newCpu != "" {
+		if e := postServerConfigure(
+			provider,
+			configureServerPostValues{ID: internalServerId, CPU: newCpu},
+		); e != nil {
+			return e
+		}
+	}
+
+	if newRam != "" {
+		if e := postServerConfigure(
+			provider,
+			configureServerPostValues{ID: internalServerId, RAM: newRam},
+		); e != nil {
+			return e
+		}
+	}
+
+	if newTrafficPackage != "" || newBillingCycle != "" {
+		billingCycle := ""
+		if newBillingCycle != "" {
+			billingCycle = newBillingCycle
+		}
+		trafficPackage := oldTrafficPackage
+		if newTrafficPackage != "" {
+			trafficPackage = newTrafficPackage
+		}
+		if e := postServerConfigure(
+			provider,
+			configureServerPostValues{ID: internalServerId, MonthlyPackage: trafficPackage, BillingCycle: billingCycle},
+		); e != nil {
+			return e
+		}
+	}
+
+	if newDailyBackup != "" {
+		if e := postServerConfigure(
+			provider,
+			configureServerPostValues{ID: internalServerId, DailyBackup: newDailyBackup},
+		); e != nil {
+			return e
+		}
+	}
+
+	if newManaged != "" {
+		if e := postServerConfigure(
+			provider,
+			configureServerPostValues{ID: internalServerId, Managed: newManaged},
+		); e != nil {
+			return e
+		}
+	}
+
+	return nil
+}
+
+func changeServerPower(provider *ProviderConfig, internalServerID string, operation string) error {
 	var body powerOperationServerPostValues
 	if operation == "terminate" {
-		body = powerOperationServerPostValues{ID: internalServerId, Force: true}
+		body = powerOperationServerPostValues{ID: internalServerID, Force: true}
 	} else {
-		body = powerOperationServerPostValues{ID: internalServerId}
+		body = powerOperationServerPostValues{ID: internalServerID}
 	}
 
 	result, err := request(provider, "POST", fmt.Sprintf("service/server/%s", operation), body)
@@ -353,5 +543,6 @@ func serverPowerOperation(provider *ProviderConfig, internalServerId string, ope
 
 	commandIds := result.([]interface{})
 	_, err = waitCommand(provider, commandIds[0].(string))
+
 	return err
 }

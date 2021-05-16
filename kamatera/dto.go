@@ -28,3 +28,23 @@ type powerOperationServerPostValues struct {
 	ID    string `json:"id"`
 	Force bool   `json:"force"`
 }
+
+type configureServerPostValues struct {
+	ID string `json:"id"`
+	CPU string `json:"cpu"`
+	RAM string `json:"ram"`
+	DailyBackup string `json:"dailybackup"`
+	Managed string `json:"managed"`
+	BillingCycle string `json:"billingcycle"`
+	MonthlyPackage string `json:"monthlypackage"`
+}
+
+type changePasswordServerPostValues struct {
+	ID string `json:"id"`
+	Password string `json:"password"`
+}
+
+type renameServerPostValues struct {
+	ID string `json:"id"`
+	NewName string `json:"new-name"`
+}
