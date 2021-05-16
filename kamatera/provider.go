@@ -13,9 +13,12 @@ type ProviderConfig struct {
 // Provider -
 func Provider() *schema.Provider {
 	return &schema.Provider{
-		ResourcesMap: map[string]*schema.Resource{},
+		ResourcesMap: map[string]*schema.Resource{
+			"server": resourceServer(),
+		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"server": dataSourceServer(),
+			"datacenter": dataSourceDatacenter(),
+			"image": dataSourceImage(),
 		},
 		Schema: map[string]*schema.Schema{
 			"api_client_id": {

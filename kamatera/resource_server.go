@@ -10,12 +10,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceServer() *schema.Resource {
+func resourceServer() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: dataSourceServerCreate,
-		ReadContext:   dataSourceServerRead,
-		UpdateContext: dataSourceServerUpdate,
-		DeleteContext: dataSourceServerDelete,
+		CreateContext: resourceServerCreate,
+		ReadContext:   resourceServerRead,
+		UpdateContext: resourceServerUpdate,
+		DeleteContext: resourceServerDelete,
 
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -156,7 +156,7 @@ func dataSourceServer() *schema.Resource {
 	}
 }
 
-func dataSourceServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
+func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	provider := m.(*ProviderConfig)
 
 	password := d.Get("password").(string)
@@ -254,10 +254,10 @@ func dataSourceServerCreate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.Errorf("invalid response from Kamatera API: failed to get created server name")
 	}
 	d.SetId(createdServerName)
-	return dataSourceServerCreate(ctx, d, m)
+	return resourceServerCreate(ctx, d, m)
 }
 
-func dataSourceServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
+func resourceServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	provider := m.(*ProviderConfig)
 	var body listServersPostValues
 
@@ -330,7 +330,7 @@ func dataSourceServerRead(ctx context.Context, d *schema.ResourceData, m interfa
 	return
 }
 
-func dataSourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
+func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	newCPU := ""
 	{
 		newCPUType := ""
@@ -343,7 +343,7 @@ func dataSourceServerUpdate(ctx context.Context, d *schema.ResourceData, m inter
 			_, n := d.GetChange("cpu_cores")
 			newCPUCores = n.(string)
 		}
-		newCPU = newCPUCores+newCPUType
+		newCPU = newCPUCores + newCPUType
 	}
 
 	var newRAM int64
@@ -422,7 +422,7 @@ func dataSourceServerUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	if d.HasChange("password"){
+	if d.HasChange("password") {
 		old, new := d.GetChange("password")
 
 		err := serverChangePassword(provider, d.Get("internal_server_id").(string), new.(string))
@@ -434,7 +434,7 @@ func dataSourceServerUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		d.Set("password", new)
 	}
 
-	if d.HasChange("name"){
+	if d.HasChange("name") {
 		_, new := d.GetChange("name")
 		if err := renameServer(provider, d.Get("internal_server_id").(string), new.(string)); err != nil {
 			return diag.FromErr(err)
@@ -454,10 +454,10 @@ func dataSourceServerUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		}
 	}
 
-	return dataSourceServerRead(ctx, d, m)
+	return resourceServerRead(ctx, d, m)
 }
 
-func dataSourceServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	provider := m.(*ProviderConfig)
 	err := changeServerPower(provider, d.Get("internal_server_id").(string), "terminate")
 	if err != nil {
