@@ -282,9 +282,9 @@ func resourceServerRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	{
 		diskSizes := server["diskSizes"].([]interface{})
-		var diskSizesString []string
+		var diskSizesString []float64
 		for _, v := range diskSizes {
-			diskSizesString = append(diskSizesString, v.(string))
+			diskSizesString = append(diskSizesString, v.(float64))
 		}
 		d.Set("disk_sizes_gb", diskSizesString)
 	}
