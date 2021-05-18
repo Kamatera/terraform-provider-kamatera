@@ -37,7 +37,7 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeFloat,
 				Optional: true,
 			},
-			"am_mb": {
+			"ram_mb": {
 				Type:     schema.TypeFloat,
 				Optional: true,
 			},
