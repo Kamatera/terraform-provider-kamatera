@@ -69,7 +69,7 @@ jobs:
                     include = [\"registry.terraform.io/kamatera/kamatera\"] \
                   } \
                 }" > ~/.terraformrc &&\
-          python3 tests/e2e_test.py
+          python3 test/e2e_test.py
       - uses: actions/upload-artifact@v1
         if: always()
         with:
