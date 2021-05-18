@@ -43,8 +43,7 @@ def test_create_server():
       cpu_type = "B"
       cpu_cores = 2
       ram_mb = 2048
-      disk_size_gb = 15
-      extra_disk_sizes_gb = [20, 30]
+      disk_sizes_gb = [15, 20, 30]
       billing_cycle = "monthly"
       image_id = data.kamatera_image.ubuntu_1804.id
     }
@@ -101,8 +100,7 @@ def test_stop_server():
       cpu_type = "B"
       cpu_cores = 2
       ram_mb = 2048
-      disk_size_gb = 15
-      extra_disk_sizes_gb = [20, 30]
+      disk_sizes_gb = [15, 20, 30]
       billing_cycle = "monthly"
       image_id = data.kamatera_image.ubuntu_1804.id
       power_on = false
@@ -147,8 +145,7 @@ def test_change_server_options():
       cpu_type = "B"
       cpu_cores = 1
       ram_mb = 1024
-      disk_size_gb = 15
-      extra_disk_sizes_gb = [20, 30]
+      disk_sizes_gb = [15, 20, 30]
       billing_cycle = "monthly"
       image_id = data.kamatera_image.ubuntu_1804.id
       power_on = false
