@@ -32,7 +32,7 @@ type powerOperationServerPostValues struct {
 type configureServerPostValues struct {
 	ID string `json:"id"`
 	CPU string `json:"cpu"`
-	RAM string `json:"ram"`
+	RAM float64 `json:"ram"`
 	DailyBackup string `json:"dailybackup"`
 	Managed string `json:"managed"`
 	BillingCycle string `json:"billingcycle"`

@@ -3,7 +3,6 @@ package kamatera
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -346,7 +345,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		newCPU = newCPUCores + newCPUType
 	}
 
-	var newRAM int64
+	var newRAM float64
 	if d.HasChange("ram_mb") {
 		_, n := d.GetChange("ram_mb")
 		newRAM = n.(float64)
@@ -413,7 +412,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		provider,
 		d.Get("internal_server_id").(string),
 		newCPU,
-		strconv.FormatInt(newRAM, 10),
+		newRAM,
 		oldTrafficPackage, newTrafficPackage,
 		oldBillingCycle, newBillingCycle,
 		newDailyBackup,
@@ -468,7 +467,7 @@ func resourceServerDelete(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func serverConfigure(
-	provider *ProviderConfig, internalServerId string, newCpu string, newRam string,
+	provider *ProviderConfig, internalServerId string, newCpu string, newRam float64,
 	oldTrafficPackage string, newTrafficPackage string, oldBillingCycle string, newBillingCycle string,
 	newDailyBackup string, newManaged string,
 ) error {
@@ -481,7 +480,7 @@ func serverConfigure(
 		}
 	}
 
-	if newRam != "" {
+	if newRam != 0 {
 		if e := postServerConfigure(
 			provider,
 			configureServerPostValues{ID: internalServerId, RAM: newRam},
