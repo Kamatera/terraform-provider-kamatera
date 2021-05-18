@@ -37,7 +37,7 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeFloat,
 				Optional: true,
 			},
-			"ram_mb": {
+			"am_mb": {
 				Type:     schema.TypeFloat,
 				Optional: true,
 			},
@@ -191,7 +191,7 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	{
 		diskSizes := d.Get("disk_sizes_gb").([]interface{})
 		for _, v := range diskSizes {
-			diskSizesGB = append(diskSizesGB, fmt.Sprint(v))
+			diskSizesGB = append(diskSizesGB, fmt.Sprintf("size=%s", v))
 		}
 	}
 
