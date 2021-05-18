@@ -253,7 +253,7 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.Errorf("invalid response from Kamatera API: failed to get created server name")
 	}
 	d.SetId(createdServerName)
-	return resourceServerCreate(ctx, d, m)
+	return resourceServerRead(ctx, d, m)
 }
 
 func resourceServerRead(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
