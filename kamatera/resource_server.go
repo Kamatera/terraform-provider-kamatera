@@ -192,7 +192,7 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	{
 		diskSizes := d.Get("disk_sizes_gb").([]interface{})
 		for _, v := range diskSizes {
-			diskSizesGB = append(diskSizesGB, v.(string))
+			diskSizesGB = append(diskSizesGB, fmt.Sprint(v))
 		}
 	}
 
