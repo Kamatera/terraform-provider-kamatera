@@ -13,7 +13,7 @@ type createServerPostValues struct {
 	Datacenter       string `json:"datacenter"`
 	Image            string `json:"image"`
 	CPU              string `json:"cpu"`
-	RAM              int64  `json:"ram"`
+	RAM              float64 `json:"ram"`
 	Disk             string `json:"disk"`
 	DailyBackup      string `json:"dailybackup"`
 	Managed          string `json:"managed"`

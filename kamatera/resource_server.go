@@ -39,7 +39,7 @@ func resourceServer() *schema.Resource {
 				Optional: true,
 			},
 			"ram_mb": {
-				Type:     schema.TypeInt,
+				Type:     schema.TypeFloat,
 				Optional: true,
 			},
 			"disk_sizes_gb": {
@@ -204,7 +204,7 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		Datacenter:       d.Get("datacenter_id").(string),
 		Image:            d.Get("image_id").(string),
 		CPU:              fmt.Sprintf("%v%v", d.Get("cpu_cores"), d.Get("cpu_type")),
-		RAM:              d.Get("ram_mb").(int64),
+		RAM:              d.Get("ram_mb").(float64),
 		Disk:             strings.Join(diskSizesGB, " "),
 		DailyBackup:      dailyBackup,
 		Managed:          managed,
@@ -296,7 +296,7 @@ func resourceServerRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	d.Set("power_on", server["power"].(string) == "on")
 	d.Set("datacenter_id", server["datacenter"].(string))
-	d.Set("ram_mb", server["ram"].(int64))
+	d.Set("ram_mb", server["ram"].(float64))
 	d.Set("daily_backup", server["backup"].(string) == "1")
 	d.Set("managed", server["managed"].(string) == "1")
 	d.Set("billing_cycle", server["billing"].(string))
@@ -349,7 +349,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	var newRAM int64
 	if d.HasChange("ram_mb") {
 		_, n := d.GetChange("ram_mb")
-		newRAM = n.(int64)
+		newRAM = n.(float64)
 	}
 
 	if d.HasChange("image_id") {
