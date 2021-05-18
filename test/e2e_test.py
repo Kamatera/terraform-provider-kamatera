@@ -37,7 +37,8 @@ def test_create_server():
       code = "18.04 64bit"
     }
 
-    data "kamatera_server_options" "B2_2048_monthly" {
+    resource "kamatera_server" "__CREATE_SERVER_NAME__" {
+      name = "__CREATE_SERVER_NAME__"
       datacenter_id = data.kamatera_datacenter.petach_tikva.id
       cpu_type = "B"
       cpu_cores = 2
@@ -45,11 +46,6 @@ def test_create_server():
       disk_size_gb = 15
       extra_disk_sizes_gb = [20, 30]
       billing_cycle = "monthly"
-    }
-
-    resource "kamatera_server" "__CREATE_SERVER_NAME__" {
-      name = "__CREATE_SERVER_NAME__"
-      server_options_id = data.kamatera_server_options.B2_2048_monthly.id
       image_id = data.kamatera_image.ubuntu_1804.id
     }
     """.replace("__CREATE_SERVER_NAME__", CREATE_SERVER_NAME))
@@ -99,7 +95,8 @@ def test_stop_server():
       code = "18.04 64bit"
     }
 
-    data "kamatera_server_options" "B2_2048_monthly" {
+    resource "kamatera_server" "__CREATE_SERVER_NAME__" {
+      name = "__CREATE_SERVER_NAME__"
       datacenter_id = data.kamatera_datacenter.petach_tikva.id
       cpu_type = "B"
       cpu_cores = 2
@@ -107,11 +104,6 @@ def test_stop_server():
       disk_size_gb = 15
       extra_disk_sizes_gb = [20, 30]
       billing_cycle = "monthly"
-    }
-
-    resource "kamatera_server" "__CREATE_SERVER_NAME__" {
-      name = "__CREATE_SERVER_NAME__"
-      server_options_id = data.kamatera_server_options.B2_2048_monthly.id
       image_id = data.kamatera_image.ubuntu_1804.id
       power_on = false
     }
@@ -149,7 +141,8 @@ def test_change_server_options():
       code = "18.04 64bit"
     }
 
-    data "kamatera_server_options" "B1_1024_monthly" {
+    resource "kamatera_server" "__CREATE_SERVER_NAME__" {
+      name = "__CREATE_SERVER_NAME__"
       datacenter_id = data.kamatera_datacenter.petach_tikva.id
       cpu_type = "B"
       cpu_cores = 1
@@ -157,11 +150,6 @@ def test_change_server_options():
       disk_size_gb = 15
       extra_disk_sizes_gb = [20, 30]
       billing_cycle = "monthly"
-    }
-
-    resource "kamatera_server" "__CREATE_SERVER_NAME__" {
-      name = "__CREATE_SERVER_NAME__"
-      server_options_id = data.kamatera_server_options.B1_1024_monthly.id
       image_id = data.kamatera_image.ubuntu_1804.id
       power_on = false
     }

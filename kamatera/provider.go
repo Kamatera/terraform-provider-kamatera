@@ -14,11 +14,11 @@ type ProviderConfig struct {
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		ResourcesMap: map[string]*schema.Resource{
-			"server": resourceServer(),
+			"kamatera_server": resourceServer(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"datacenter": dataSourceDatacenter(),
-			"image": dataSourceImage(),
+			"kamatera_datacenter": dataSourceDatacenter(),
+			"kamatera_image": dataSourceImage(),
 		},
 		Schema: map[string]*schema.Schema{
 			"api_client_id": {
