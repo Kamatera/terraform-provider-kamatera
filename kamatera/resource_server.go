@@ -3,6 +3,7 @@ package kamatera
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -470,12 +471,12 @@ func serverConfigure(
 	newDailyBackup string, newManaged string,
 ) error {
 	if newCpu != "" {
-		fmt.Println("newCPU", newCpu)
+		log.Println("[INFO] newCPU", newCpu)
 		if e := postServerConfigure(
 			provider,
 			configureServerPostValues{ID: internalServerId, CPU: newCpu},
 		); e != nil {
-			fmt.Println("error", e)
+			log.Println("[INFO] error", e)
 			return e
 		}
 	}
