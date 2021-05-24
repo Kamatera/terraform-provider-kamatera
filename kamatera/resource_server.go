@@ -330,13 +330,21 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	{
 		var newCPUType interface{}
 		if d.HasChange("cpu_type") {
-			_, n := d.GetChange("cpu_type")
-			newCPUType = n
+			o, n := d.GetChange("cpu_type")
+			if n.(string) == "" {
+				newCPUType = o
+			} else {
+				newCPUType = n
+			}
 		}
 		var newCPUCores interface{}
 		if d.HasChange("cpu_cores") {
-			_, n := d.GetChange("cpu_cores")
-			newCPUCores = n
+			o, n := d.GetChange("cpu_cores")
+			if n.(float64) == 0 {
+				newCPUCores = o
+			} else {
+				newCPUCores = n
+			}
 		}
 		newCPU = fmt.Sprintf("%v%v", newCPUCores, newCPUType)
 	}
