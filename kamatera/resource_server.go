@@ -336,7 +336,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		newCPUCores := ""
 		if d.HasChange("cpu_cores") {
 			_, n := d.GetChange("cpu_cores")
-			newCPUCores = n.(string)
+			newCPUCores = fmt.Sprint(n)
 		}
 		newCPU = newCPUCores + newCPUType
 	}
