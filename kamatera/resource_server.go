@@ -330,23 +330,17 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	{
 		var newCPUType interface{}
 		if d.HasChange("cpu_type") {
-			o, n := d.GetChange("cpu_type")
-			if n.(string) == "" {
-				newCPUType = o
-			} else {
-				newCPUType = n
-			}
+			_, n := d.GetChange("cpu_type")
+			newCPUType = n
 		}
 		var newCPUCores interface{}
 		if d.HasChange("cpu_cores") {
-			o, n := d.GetChange("cpu_cores")
-			if n.(float64) == 0 {
-				newCPUCores = o
-			} else {
-				newCPUCores = n
-			}
+			_, n := d.GetChange("cpu_cores")
+			newCPUCores = n
 		}
-		newCPU = fmt.Sprintf("%v%v", newCPUCores, newCPUType)
+		if d.HasChanges("cpu_type", "cpu_cores") {
+			newCPU = fmt.Sprintf("%v%v", newCPUCores, newCPUType)
+		}
 	}
 
 	var newRAM float64
@@ -426,23 +420,23 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	if d.HasChange("password") {
-		old, new := d.GetChange("password")
+		o, n := d.GetChange("password")
 
-		err := serverChangePassword(provider, d.Get("internal_server_id").(string), new.(string))
+		err := serverChangePassword(provider, d.Get("internal_server_id").(string), n.(string))
 		if err != nil {
-			d.Set("password", old)
+			d.Set("password", o)
 			return diag.FromErr(err)
 		}
 
-		d.Set("password", new)
+		d.Set("password", n)
 	}
 
 	if d.HasChange("name") {
-		_, new := d.GetChange("name")
-		if err := renameServer(provider, d.Get("internal_server_id").(string), new.(string)); err != nil {
+		_, n := d.GetChange("name")
+		if err := renameServer(provider, d.Get("internal_server_id").(string), n.(string)); err != nil {
 			return diag.FromErr(err)
 		}
-		d.Set("name", new)
+		d.Set("name", n)
 	}
 
 	if d.HasChange("power_on") {
