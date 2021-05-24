@@ -328,17 +328,17 @@ func resourceServerRead(ctx context.Context, d *schema.ResourceData, m interface
 func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	newCPU := ""
 	{
-		newCPUType := ""
+		var newCPUType interface{}
 		if d.HasChange("cpu_type") {
 			_, n := d.GetChange("cpu_type")
-			newCPUType = n.(string)
+			newCPUType = n
 		}
-		newCPUCores := ""
+		var newCPUCores interface{}
 		if d.HasChange("cpu_cores") {
 			_, n := d.GetChange("cpu_cores")
-			newCPUCores = fmt.Sprint(n)
+			newCPUCores = n
 		}
-		newCPU = newCPUCores + newCPUType
+		newCPU = fmt.Sprintf("%v%v", newCPUCores, newCPUType)
 	}
 
 	var newRAM float64
