@@ -11,6 +11,7 @@ CREATE_SERVER_NAME = "terraformtest"
 CLOUDCLI_ARGS = ["--api-clientid", os.environ["KAMATERA_API_CLIENT_ID"], "--api-secret", os.environ["KAMATERA_API_SECRET"]]
 PROVIDER_VERSION = "0.0.4"
 
+os.environ['TF_LOG'] = 'DEBUG'
 
 def test_create_server():
     with open("tests/output/main.tf", "w") as f:
