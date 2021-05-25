@@ -44,7 +44,7 @@ def test_create_server():
       cpu_type = "B"
       cpu_cores = 2
       ram_mb = 2048
-      disk_sizes_gb = [15, 20, 30]
+      disk_sizes_gb = [15, 20]
       billing_cycle = "monthly"
       image_id = data.kamatera_image.ubuntu_1804.id
     }
@@ -64,7 +64,7 @@ def test_create_server():
     assert server["name"].startswith(CREATE_SERVER_NAME)
     assert server["ram"] == 2048
     assert server["power"] == "on"
-    assert server["diskSizes"] == [15, 20, 30]
+    assert server["diskSizes"] == [15, 20]
     assert server["networks"][0]["network"] == "wan-il-pt"
     assert server["billing"] == "monthly"
     assert server["traffic"] == "t5000"
@@ -101,7 +101,7 @@ def test_stop_server():
       cpu_type = "B"
       cpu_cores = 2
       ram_mb = 2048
-      disk_sizes_gb = [15, 20, 30]
+      disk_sizes_gb = [15, 20]
       billing_cycle = "monthly"
       image_id = data.kamatera_image.ubuntu_1804.id
       power_on = false
@@ -146,7 +146,7 @@ def test_change_server_options():
       cpu_type = "B"
       cpu_cores = 1
       ram_mb = 1024
-      disk_sizes_gb = [15, 20, 30]
+      disk_sizes_gb = [15, 20]
       billing_cycle = "monthly"
       image_id = data.kamatera_image.ubuntu_1804.id
       power_on = false
