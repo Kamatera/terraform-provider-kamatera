@@ -232,7 +232,7 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	commandID := commandIDs[0].(string)
 	command, err := waitCommand(provider, commandID)
 	if err != nil {
-		diag.FromErr(err)
+		return diag.FromErr(err)
 	}
 
 	createLog, hasCreateLog := command["log"]
