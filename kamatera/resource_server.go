@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -279,7 +280,13 @@ func resourceServerRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	cpu := server["cpu"].(string)
 	d.Set("cpu_type", cpu[1:2])
-	d.Set("cpu_cores", cpu[0:1])
+	{
+		cpuCores, err := strconv.ParseFloat(cpu[0:1], 16)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.Set("cpu_cores", cpuCores)
+	}
 
 	{
 		diskSizes := server["diskSizes"].([]interface{})
@@ -330,14 +337,22 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	newCPU := ""
 	{
 		var newCPUType interface{}
-		if d.HasChange("cpu_type") {
-			_, n := d.GetChange("cpu_type")
-			newCPUType = n
+		{
+			o, n := d.GetChange("cpu_type")
+			if d.HasChange("cpu_type") {
+				newCPUType = n
+			} else {
+				newCPUType = o
+			}
 		}
 		var newCPUCores interface{}
-		if d.HasChange("cpu_cores") {
-			_, n := d.GetChange("cpu_cores")
-			newCPUCores = n
+		{
+			o, n := d.GetChange("cpu_cores")
+			if d.HasChange("cpu_cores") {
+				newCPUCores = n
+			} else {
+				newCPUCores = o
+			}
 		}
 		if d.HasChanges("cpu_type", "cpu_cores") {
 			newCPU = fmt.Sprintf("%v%v", newCPUCores, newCPUType)
