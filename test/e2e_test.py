@@ -3,6 +3,7 @@
 import os
 import subprocess
 import json
+import time
 
 
 os.makedirs("tests/output", exist_ok=True)
@@ -172,7 +173,10 @@ def test_destroy_server():
 
 
 test_create_server()
+time.sleep(2)
 test_stop_server()
+time.sleep(2)
 test_change_server_options()
+time.sleep(2)
 test_destroy_server()
 print("Great Success!")
