@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
+
 import os
 import subprocess
 import json
+import time
 
 
 os.makedirs("tests/output", exist_ok=True)
+
 CREATE_SERVER_NAME = "terraformtest"
-
 CLOUDCLI_ARGS = ["--api-clientid", os.environ["KAMATERA_API_CLIENT_ID"], "--api-secret", os.environ["KAMATERA_API_SECRET"]]
+PROVIDER_VERSION = "0.0.4"
 
+os.environ['TF_LOG'] = 'DEBUG'
 
 def test_create_server():
     with open("tests/output/main.tf", "w") as f:
@@ -35,19 +39,14 @@ def test_create_server():
       code = "18.04 64bit"
     }
 
-    data "kamatera_server_options" "B2_2048_monthly" {
+    resource "kamatera_server" "__CREATE_SERVER_NAME__" {
+      name = "__CREATE_SERVER_NAME__"
       datacenter_id = data.kamatera_datacenter.petach_tikva.id
       cpu_type = "B"
       cpu_cores = 2
       ram_mb = 2048
-      disk_size_gb = 15
-      extra_disk_sizes_gb = [20, 30]
+      disk_sizes_gb = [15, 20]
       billing_cycle = "monthly"
-    }
-
-    resource "kamatera_server" "__CREATE_SERVER_NAME__" {
-      name = "__CREATE_SERVER_NAME__"
-      server_options_id = data.kamatera_server_options.B2_2048_monthly.id
       image_id = data.kamatera_image.ubuntu_1804.id
     }
     """.replace("__CREATE_SERVER_NAME__", CREATE_SERVER_NAME))
@@ -66,7 +65,7 @@ def test_create_server():
     assert server["name"].startswith(CREATE_SERVER_NAME)
     assert server["ram"] == 2048
     assert server["power"] == "on"
-    assert server["diskSizes"] == [15, 20, 30]
+    assert server["diskSizes"] == [15, 20]
     assert server["networks"][0]["network"] == "wan-il-pt"
     assert server["billing"] == "monthly"
     assert server["traffic"] == "t5000"
@@ -97,19 +96,14 @@ def test_stop_server():
       code = "18.04 64bit"
     }
 
-    data "kamatera_server_options" "B2_2048_monthly" {
+    resource "kamatera_server" "__CREATE_SERVER_NAME__" {
+      name = "__CREATE_SERVER_NAME__"
       datacenter_id = data.kamatera_datacenter.petach_tikva.id
       cpu_type = "B"
       cpu_cores = 2
       ram_mb = 2048
-      disk_size_gb = 15
-      extra_disk_sizes_gb = [20, 30]
+      disk_sizes_gb = [15, 20]
       billing_cycle = "monthly"
-    }
-
-    resource "kamatera_server" "__CREATE_SERVER_NAME__" {
-      name = "__CREATE_SERVER_NAME__"
-      server_options_id = data.kamatera_server_options.B2_2048_monthly.id
       image_id = data.kamatera_image.ubuntu_1804.id
       power_on = false
     }
@@ -147,19 +141,14 @@ def test_change_server_options():
       code = "18.04 64bit"
     }
 
-    data "kamatera_server_options" "B1_1024_monthly" {
+    resource "kamatera_server" "__CREATE_SERVER_NAME__" {
+      name = "__CREATE_SERVER_NAME__"
       datacenter_id = data.kamatera_datacenter.petach_tikva.id
       cpu_type = "B"
       cpu_cores = 1
       ram_mb = 1024
-      disk_size_gb = 15
-      extra_disk_sizes_gb = [20, 30]
+      disk_sizes_gb = [15, 20]
       billing_cycle = "monthly"
-    }
-
-    resource "kamatera_server" "__CREATE_SERVER_NAME__" {
-      name = "__CREATE_SERVER_NAME__"
-      server_options_id = data.kamatera_server_options.B1_1024_monthly.id
       image_id = data.kamatera_image.ubuntu_1804.id
       power_on = false
     }
@@ -184,7 +173,10 @@ def test_destroy_server():
 
 
 test_create_server()
+time.sleep(2)
 test_stop_server()
+time.sleep(2)
 test_change_server_options()
+time.sleep(2)
 test_destroy_server()
 print("Great Success!")
