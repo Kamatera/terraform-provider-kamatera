@@ -3,7 +3,6 @@ package kamatera
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -22,6 +21,7 @@ func resourceServer() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				Computed: true,
 			},
 			"datacenter_id": {
 				Type:     schema.TypeString,
@@ -54,6 +54,7 @@ func resourceServer() *schema.Resource {
 			"monthly_traffic_package": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"power_on": {
 				Type:     schema.TypeBool,
@@ -486,12 +487,10 @@ func serverConfigure(
 	newDailyBackup string, newManaged string,
 ) error {
 	if newCpu != "" {
-		log.Println("[INFO] newCPU", newCpu)
 		if e := postServerConfigure(
 			provider,
 			configureServerPostValues{ID: internalServerId, CPU: newCpu},
 		); e != nil {
-			log.Println("[INFO] error", e)
 			return e
 		}
 	}
