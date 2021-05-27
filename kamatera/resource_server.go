@@ -20,7 +20,6 @@ func resourceServer() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
-				Required: true,
 				Computed: true,
 			},
 			"datacenter_id": {
