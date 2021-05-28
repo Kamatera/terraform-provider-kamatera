@@ -34,19 +34,14 @@ data "kamatera_image" "ubuntu_1804" {
   code = "18.04 64bit"
 }
 
-data "kamatera_server_options" "B2_2048_monthly" {
+resource "kamatera_server" "__CREATE_SERVER_NAME__" {
+  name = "__CREATE_SERVER_NAME__"
   datacenter_id = data.kamatera_datacenter.petach_tikva.id
   cpu_type = "B"
   cpu_cores = 2
   ram_mb = 2048
-  disk_size_gb = 15
-  extra_disk_sizes_gb = [20, 30]
+  disk_sizes_gb = [15, 20]
   billing_cycle = "monthly"
-}
-
-resource "kamatera_server" "terraformtest" {
-  name = "terraformtest"
-  server_options_id = data.kamatera_server_options.B2_2048_monthly.id
   image_id = data.kamatera_image.ubuntu_1804.id
 }
 ```
@@ -74,19 +69,14 @@ data "kamatera_image" "ubuntu_1804" {
   code = "18.04 64bit"
 }
 
-data "kamatera_server_options" "B2_2048_monthly" {
+resource "kamatera_server" "__CREATE_SERVER_NAME__" {
+  name = "__CREATE_SERVER_NAME__"
   datacenter_id = data.kamatera_datacenter.petach_tikva.id
   cpu_type = "B"
   cpu_cores = 2
   ram_mb = 2048
-  disk_size_gb = 15
-  extra_disk_sizes_gb = [20, 30]
+  disk_sizes_gb = [15, 20]
   billing_cycle = "monthly"
-}
-
-resource "kamatera_server" "terraformtest" {
-  name = "terraformtest"
-  server_options_id = data.kamatera_server_options.B2_2048_monthly.id
   image_id = data.kamatera_image.ubuntu_1804.id
 }
 ```
