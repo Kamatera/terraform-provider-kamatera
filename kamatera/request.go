@@ -95,6 +95,74 @@ func renameServer(provider *ProviderConfig, internalServerID string, name string
 	return err
 }
 
+type diskOperation struct {
+	add    []float64
+	remove []int           // index
+	update map[int]float64 // map[index]newValue
+}
+
+func changeDisks(provider *ProviderConfig, id string, operation diskOperation) error {
+	switch {
+	case len(operation.add) > 0:
+		for _, v := range operation.add {
+			result, err := request(
+				provider,
+				"POST",
+				"server/disk",
+				changeDisksPostValues{
+					ID:  id,
+					Add: fmt.Sprintf("%fgb", v),
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			commandIds := result.([]interface{})
+			_, err = waitCommand(provider, commandIds[0].(string))
+		}
+	case len(operation.remove) > 0:
+		for _, v := range operation.remove {
+			result, err := request(
+				provider,
+				"POST",
+				"server/disk",
+				changeDisksPostValues{
+					ID:     id,
+					Remove: fmt.Sprint(v),
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			commandIds := result.([]interface{})
+			_, err = waitCommand(provider, commandIds[0].(string))
+		}
+	case len(operation.update) > 0:
+		for key, val := range operation.update {
+			result, err := request(
+				provider,
+				"POST",
+				"server/disk",
+				changeDisksPostValues{
+					ID:     id,
+					Resize: fmt.Sprint(key),
+					Size:   fmt.Sprintf("%fgb", val),
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			commandIds := result.([]interface{})
+			_, err = waitCommand(provider, commandIds[0].(string))
+		}
+	}
+
+	return nil
+}
+
 func waitCommand(provider *ProviderConfig, commandID string) (map[string]interface{}, error) {
 	if provider == nil {
 		return nil, noProviderErr
