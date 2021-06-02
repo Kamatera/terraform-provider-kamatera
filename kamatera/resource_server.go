@@ -432,47 +432,13 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	if d.HasChange("disk_sizes_gb") {
 		o, n := d.GetChange("disk_sizes_gb")
-		var oldValues []float64
-		for _, v := range o.([]interface{}) {
-			oldValues = append(oldValues, v.(float64))
-		}
-		var newValues []float64
-		for _, v := range n.([]interface{}) {
-			newValues = append(newValues, v.(float64))
-		}
-		if len(oldValues) == 0 || len(newValues) == 0 {
-			return diag.Errorf("can not parse disk value, old: %v, new: %v", o, n)
+
+		op, err := calDiskChangeOperation(o, n)
+		if err != nil {
+			return diag.FromErr(err)
 		}
 
-		op := diskOperation{}
-		if len(oldValues) > len(newValues) {
-			oldLen := len(oldValues)
-			newLen := len(newValues)
-			op.remove = []int{}
-
-			i := newLen
-			for i < oldLen {
-				op.remove = append(op.remove, i)
-				i += 1
-			}
-		} else if len(oldValues) < len(newValues) {
-			oldLen := len(oldValues)
-			op.add = newValues[oldLen-1:]
-		}
-
-		// Update
-		op.update = map[int]float64{}
-		for i, v := range oldValues {
-			if i == len(newValues) {
-				break
-			}
-
-			if v != newValues[i] {
-				op.update[i] = newValues[i]
-			}
-		}
-
-		err := changeDisks(provider, d.Get("internal_server_id").(string), op)
+		err = changeDisks(provider, d.Get("internal_server_id").(string), op)
 		if err != nil {
 			return diag.FromErr(err)
 		}
