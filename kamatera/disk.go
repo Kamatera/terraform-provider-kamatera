@@ -4,19 +4,47 @@ import (
 	"fmt"
 )
 
+type cannotParseDiskValuesErr struct {
+	old interface{}
+	new interface{}
+}
+
+func (c cannotParseDiskValuesErr) Error() string {
+	return fmt.Sprintf("cannot parse disk values: o: %v, n: %v", c.old, c.new)
+}
+
 func calDiskChangeOperation(o, n interface{}) (diskOperation, error) {
 	op := diskOperation{}
 
 	var oldValues []float64
 	for _, v := range o.([]interface{}) {
-		oldValues = append(oldValues, v.(float64))
+		val, ok := v.(float64)
+		if ok {
+			oldValues = append(oldValues, val)
+		} else {
+			return diskOperation{}, cannotParseDiskValuesErr{
+				old: o,
+				new: n,
+			}
+		}
 	}
 	var newValues []float64
 	for _, v := range n.([]interface{}) {
-		newValues = append(newValues, v.(float64))
+		val, ok := v.(float64)
+		if ok {
+			newValues = append(newValues, val)
+		} else {
+			return diskOperation{}, cannotParseDiskValuesErr{
+				old: o,
+				new: n,
+			}
+		}
 	}
 	if len(oldValues) == 0 || len(newValues) == 0 {
-		return op, fmt.Errorf("can not parse disk value, old: %v, new: %v", o, n)
+		return diskOperation{}, cannotParseDiskValuesErr{
+			old: o,
+			new: n,
+		}
 	}
 
 	if len(oldValues) > len(newValues) {

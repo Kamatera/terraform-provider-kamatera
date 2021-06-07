@@ -44,6 +44,19 @@ func Test_calDiskChangeOperation(t *testing.T) {
 			n: []interface{}{124.0},
 			expected: diskOperation{remove: []int{1}, update: map[int]float64{0: 124}},
 		},
+		{
+			name: "cannot parse old values",
+			o: []interface{}{"a", 123.0},
+			n: []interface{}{123.0},
+			expected: diskOperation{},
+			expectedErr: cannotParseDiskValuesErr{old: []interface{}{"a", 123.0},new: []interface{}{123.0}},
+		},
+		{
+			name: "has 2 same size disks and resize 1",
+			o: []interface{}{123.0, 123.0},
+			n: []interface{}{123.0, 456.0},
+			expected: diskOperation{update: map[int]float64{1: 456.0}},
+		},
 	}
 
 	for _, test := range tests {
