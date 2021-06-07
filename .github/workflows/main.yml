@@ -6,7 +6,10 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
-    - run: |
+    - name: Test
+      run: go test -v ./...
+    - name: Build
+      run: |
         if [[ $GITHUB_REF == refs/tags/* ]]; then
           VERSION="$(echo $GITHUB_REF | sed -e 's:refs/tags/::')"
         else
@@ -43,7 +46,7 @@ jobs:
       with:
         name: build
         path: build
-  test:
+  integration-test:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
