@@ -15,19 +15,19 @@ func Test_calDiskChangeOperation(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name:     "only update",
+			name:     "update only",
 			o:        []interface{}{123.0, 456.0},
 			n:        []interface{}{123.0, 457.0},
 			expected: diskOperation{update: map[int]float64{1: 457}},
 		},
 		{
-			name:     "only remove",
+			name:     "remove only",
 			o:        []interface{}{123.0, 456.0},
 			n:        []interface{}{123.0},
 			expected: diskOperation{remove: []int{1}},
 		},
 		{
-			name: "only add",
+			name: "add only",
 			o: []interface{}{123.0},
 			n: []interface{}{123.0, 456.0},
 			expected: diskOperation{add: []float64{456}},

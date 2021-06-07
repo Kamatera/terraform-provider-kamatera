@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 )
 
+var skipWaiting = false
+
 func request(provider *ProviderConfig, method string, path string, body interface{}) (interface{}, error) {
 	if provider == nil {
 		return nil, noProviderErr
@@ -50,6 +52,8 @@ func request(provider *ProviderConfig, method string, path string, body interfac
 	}
 	return result, nil
 }
+
+var mockableRequest = request
 
 func postServerConfigure(provider *ProviderConfig, postValues configureServerPostValues) error {
 	if provider == nil {
@@ -102,16 +106,15 @@ type diskOperation struct {
 }
 
 func changeDisks(provider *ProviderConfig, id string, operation diskOperation) error {
-	switch {
-	case len(operation.add) > 0:
+	if len(operation.add) > 0 {
 		for _, v := range operation.add {
-			result, err := request(
+			result, err := mockableRequest(
 				provider,
 				"POST",
 				"server/disk",
 				changeDisksPostValues{
 					ID:  id,
-					Add: fmt.Sprintf("%fgb", v),
+					Add: fmt.Sprintf("%.0fgb", v),
 				},
 			)
 			if err != nil {
@@ -121,9 +124,11 @@ func changeDisks(provider *ProviderConfig, id string, operation diskOperation) e
 			commandIds := result.([]interface{})
 			_, err = waitCommand(provider, commandIds[0].(string))
 		}
-	case len(operation.remove) > 0:
+	}
+
+	if len(operation.remove) > 0 {
 		for _, v := range operation.remove {
-			result, err := request(
+			result, err := mockableRequest(
 				provider,
 				"POST",
 				"server/disk",
@@ -139,16 +144,18 @@ func changeDisks(provider *ProviderConfig, id string, operation diskOperation) e
 			commandIds := result.([]interface{})
 			_, err = waitCommand(provider, commandIds[0].(string))
 		}
-	case len(operation.update) > 0:
+	}
+
+	if len(operation.update) > 0 {
 		for key, val := range operation.update {
-			result, err := request(
+			result, err := mockableRequest(
 				provider,
 				"POST",
 				"server/disk",
 				changeDisksPostValues{
 					ID:     id,
 					Resize: fmt.Sprint(key),
-					Size:   fmt.Sprintf("%fgb", val),
+					Size:   fmt.Sprintf("%.0fgb", val),
 				},
 			)
 			if err != nil {
@@ -164,6 +171,10 @@ func changeDisks(provider *ProviderConfig, id string, operation diskOperation) e
 }
 
 func waitCommand(provider *ProviderConfig, commandID string) (map[string]interface{}, error) {
+	if skipWaiting {
+		return nil, nil
+	}
+
 	if provider == nil {
 		return nil, noProviderErr
 	}
