@@ -7,6 +7,8 @@ import (
 )
 
 func Test_calDiskChangeOperation(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		o           []interface{}
@@ -56,6 +58,17 @@ func Test_calDiskChangeOperation(t *testing.T) {
 			o: []interface{}{123.0, 123.0},
 			n: []interface{}{123.0, 456.0},
 			expected: diskOperation{update: map[int]float64{1: 456.0}},
+		},
+		{
+			name: "update 4 disks",
+			o: []interface{}{1.0, 2.0, 3.0, 4.0},
+			n: []interface{}{2.0, 3.0, 4.0, 5.0},
+			expected: diskOperation{update: map[int]float64{
+				0: 2,
+				1: 3,
+				2: 4,
+				3: 5,
+			}},
 		},
 	}
 
