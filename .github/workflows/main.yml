@@ -6,8 +6,10 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
-    - run: go test -v ./...
-    - run: |
+    - name: Test
+      run: go test -v ./...
+    - name: Build
+      run: |
         if [[ $GITHUB_REF == refs/tags/* ]]; then
           VERSION="$(echo $GITHUB_REF | sed -e 's:refs/tags/::')"
         else
@@ -80,7 +82,7 @@ jobs:
     runs-on: ubuntu-18.04
     needs:
       - build
-      - test
+      - integration-test
     steps:
       - uses: actions/download-artifact@v1
         with:
