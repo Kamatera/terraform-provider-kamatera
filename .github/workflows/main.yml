@@ -6,7 +6,10 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
-    - run: |
+    - name: Test
+      run: go test -v ./...
+    - name: Build
+      run: |
         if [[ $GITHUB_REF == refs/tags/* ]]; then
           VERSION="$(echo $GITHUB_REF | sed -e 's:refs/tags/::')"
         else
@@ -43,7 +46,7 @@ jobs:
       with:
         name: build
         path: build
-  test:
+  integration-test:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
@@ -79,7 +82,7 @@ jobs:
     runs-on: ubuntu-18.04
     needs:
       - build
-      - test
+      - integration-test
     steps:
       - uses: actions/download-artifact@v1
         with:
@@ -104,3 +107,24 @@ jobs:
               fi
             done
           fi
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        if: success()
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15.x
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Calc coverage
+        run: |
+          go test -v -covermode=count -coverprofile=coverage.out ./...
+      - name: Convert coverage.out to coverage.lcov
+        uses: jandelgado/gcov2lcov-action@v1.0.6
+      - name: Coveralls
+        uses: coverallsapp/github-action@v1.1.2
+        with:
+          github-token: ${{ secrets.github_token }}
+          path-to-lcov: coverage.lcov

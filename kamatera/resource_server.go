@@ -400,11 +400,6 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.Errorf("changing datacenter is not supported yet")
 	}
 
-	if d.HasChange("disk_sizes_gb") {
-		// TODO: implement
-		return diag.Errorf("changing disk sizes is not supported yet")
-	}
-
 	newDailyBackup := ""
 	if d.HasChange("daily_backup") {
 		newDailyBackup = "no"
@@ -433,6 +428,20 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		newManaged,
 	); err != nil {
 		return diag.FromErr(err)
+	}
+
+	if d.HasChange("disk_sizes_gb") {
+		o, n := d.GetChange("disk_sizes_gb")
+
+		op, err := calDiskChangeOperation(o, n)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		err = changeDisks(provider, d.Get("internal_server_id").(string), op)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	if d.HasChange("password") {
