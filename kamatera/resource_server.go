@@ -82,6 +82,52 @@ func resourceServer() *schema.Resource {
 				},
 				Optional: true,
 			},
+			"attached_networks": {
+				Type: schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"network": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"ips": {
+							Type:     schema.TypeList,
+							Elem:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+				Computed: true,
+			},
+			"networks": {
+				Type: schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type: schema.TypeString,
+							Computed: true,
+						},
+						"network": {
+							Type: schema.TypeString,
+							Required: true,
+						},
+						"ips": {
+							Type: schema.TypeList,
+							Elem: schema.TypeString,
+							Computed: true,
+						},
+						"mac": {
+							Type: schema.TypeString,
+							Computed: true,
+						},
+						"connected": {
+							Type: schema.TypeBool,
+							Computed: true,
+						},
+					},
+				},
+				MinItems: 1,
+			},
 			"daily_backup": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -116,23 +162,6 @@ func resourceServer() *schema.Resource {
 			},
 			"price_hourly_off": {
 				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"attached_networks": {
-				Type: schema.TypeList,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"network": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"ips": {
-							Type:     schema.TypeList,
-							Elem:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
 				Computed: true,
 			},
 			"public_ips": {
