@@ -170,6 +170,29 @@ func changeDisks(provider *ProviderConfig, id string, operation diskOperation) e
 	return nil
 }
 
+func getAllNetworks(provider *ProviderConfig, name string) ([]networkResponse, error) {
+	result, err := mockableRequest(
+		provider,
+		"POST",
+		"server/network",
+		struct {
+			Name string `json:"Name"`
+		}{
+			Name: name,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var networks []networkResponse
+	for _, v := range result.([]interface{}) {
+		networks = append(networks, v.(networkResponse))
+	}
+
+	return networks, nil
+}
+
 func waitCommand(provider *ProviderConfig, commandID string) (map[string]interface{}, error) {
 	if skipWaiting {
 		return nil, nil

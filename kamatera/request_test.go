@@ -56,28 +56,28 @@ func Test_changeDisks(t *testing.T) {
 			},
 			expected: []changeDisksPostValues{
 				{
-					ID: "1",
+					ID:  "1",
 					Add: "20gb",
 				},
 				{
-					ID: "1",
+					ID:     "1",
 					Resize: "1",
-					Size: "10gb",
+					Size:   "10gb",
 				},
 			},
 		},
 		{
 			name: "update and remove",
-			op: diskOperation{remove: []int{1}, update: map[int]float64{0: 10}},
+			op:   diskOperation{remove: []int{1}, update: map[int]float64{0: 10}},
 			expected: []changeDisksPostValues{
 				{
-					ID: "1",
+					ID:     "1",
 					Remove: "1",
 				},
 				{
-					ID: "1",
+					ID:     "1",
 					Resize: "0",
-					Size: "10gb",
+					Size:   "10gb",
 				},
 			},
 		},

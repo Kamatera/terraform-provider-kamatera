@@ -18,6 +18,7 @@ func resourceServer() *schema.Resource {
 		DeleteContext: resourceServerDelete,
 
 		Schema: map[string]*schema.Schema{
+			// id is name
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -64,6 +65,7 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			// TODO: remove
 			"network": {
 				Type:     schema.TypeList,
 				MaxItems: 4,
@@ -80,8 +82,10 @@ func resourceServer() *schema.Resource {
 						},
 					},
 				},
-				Optional: true,
+				Optional:   true,
+				Deprecated: "Use networks instead",
 			},
+			// TODO: remove
 			"attached_networks": {
 				Type: schema.TypeList,
 				Elem: &schema.Resource{
@@ -97,36 +101,41 @@ func resourceServer() *schema.Resource {
 						},
 					},
 				},
-				Computed: true,
+				Computed:   true,
+				Deprecated: "Use networks instead",
 			},
 			"networks": {
 				Type: schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": {
-							Type: schema.TypeString,
-							Computed: true,
-						},
 						"network": {
-							Type: schema.TypeString,
+							Type:     schema.TypeString,
 							Required: true,
 						},
 						"ips": {
-							Type: schema.TypeList,
-							Elem: schema.TypeString,
+							Type:     schema.TypeList,
+							Elem:     schema.TypeString,
 							Computed: true,
 						},
 						"mac": {
-							Type: schema.TypeString,
+							Type:     schema.TypeString,
 							Computed: true,
 						},
 						"connected": {
-							Type: schema.TypeBool,
+							Type:     schema.TypeBool,
 							Computed: true,
 						},
 					},
 				},
 				MinItems: 1,
+			},
+			"auto_commit_snapshot": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				DefaultFunc: func() (interface{}, error) {
+					return true, nil
+				},
+				Description: "Autocommit snapshot after each possible change, e.g., network change, ...",
 			},
 			"daily_backup": {
 				Type:     schema.TypeBool,
@@ -175,8 +184,9 @@ func resourceServer() *schema.Resource {
 				Computed: true,
 			},
 			"internal_server_id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Real ID of the server",
 			},
 		},
 	}
@@ -200,6 +210,7 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		managed = "yes"
 	}
 
+	// TODO: remove
 	var networks []string
 	for _, network := range d.Get("network").([]interface{}) {
 		network := network.(map[string]interface{})
@@ -339,6 +350,8 @@ func resourceServerRead(ctx context.Context, d *schema.ResourceData, m interface
 	d.Set("price_hourly_off", server["priceHourlyOff"].(string))
 
 	networks := server["networks"].([]interface{})
+
+	// TODO: remove
 	var publicIPs []string
 	var privateIPs []string
 	var attachedNetworks []interface{}
@@ -358,6 +371,37 @@ func resourceServerRead(ctx context.Context, d *schema.ResourceData, m interface
 	d.Set("public_ips", publicIPs)
 	d.Set("private_ips", privateIPs)
 	d.Set("attached_networks", attachedNetworks)
+
+	currentNetworks := d.Get("networks").([]map[string]interface{})
+	if len(currentNetworks) != len(networks) {
+		return diag.Errorf("different number of networks, expected %v, got %v", len(currentNetworks), len(networks))
+	}
+	for _, network := range networks {
+		network := network.(map[string]interface{})
+
+		var currentNetwork map[string]interface{}
+		for _, n := range currentNetworks {
+			if n["network"] == network["network"] {
+				currentNetwork = n
+				break
+			}
+		}
+
+		if currentNetwork == nil {
+			return diag.Errorf("not matching network. Got %+v", network)
+		}
+
+		for key, value := range network {
+			switch key {
+			case "connected":
+				currentNetwork["connected"] = value.(bool)
+			case "mac":
+				currentNetwork["mac"] = value.(string)
+			case "ips":
+				currentNetwork["ips"] = value
+			}
+		}
+	}
 
 	return
 }

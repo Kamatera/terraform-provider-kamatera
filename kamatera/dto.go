@@ -56,3 +56,11 @@ type changeDisksPostValues struct {
 	Resize string `json:"resize,omitempty"`
 	Size   string `json:"size,omitempty"`
 }
+
+type networkResponse struct {
+	Network   string   `json:"network"`
+	Connected bool     `json:"connected"`
+	MAC       string   `json:"mac"`
+	IPs       []string `json:"ips"`
+	RoutedIPs []string `json:"routed_ips"`
+}
