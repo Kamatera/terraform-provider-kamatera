@@ -21,3 +21,10 @@ CommitMsg:
 PreCommit:
   AuthorName:
     enabled: false
+  GoFmt:
+    enabled: true 
+    description: 'Fix with go fmt'
+    required_executable: 'go'
+    command: ['go', 'fmt']
+    parallelize: false
+    include: '**/*.go'
