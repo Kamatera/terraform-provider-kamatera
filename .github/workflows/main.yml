@@ -78,35 +78,35 @@ jobs:
         with:
           name: tests_output
           path: tests/output
-  publish:
-    runs-on: ubuntu-18.04
-    needs:
-      - build
-      - integration-test
-    steps:
-      - uses: actions/download-artifact@v1
-        with:
-          name: build
-      - env:
-          KAMATERA_MACHINE_USER_TOKEN: ${{ secrets.KAMATERA_MACHINE_USER_TOKEN }}
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION="$(echo $GITHUB_REF | sed -e 's:refs/tags/::')" &&\
-            RELEASE_ID="$(curl -sL https://api.github.com/repos/Kamatera/terraform-provider-kamatera/releases/tags/${VERSION} | jq -r .id)" &&\
-            echo uploading binaries to release RELEASE_ID=$RELEASE_ID &&\
-            cd build &&\
-            for FILE in `ls *.zip`; do
-              if [ "$(curl -H "Authorization: token $KAMATERA_MACHINE_USER_TOKEN" \
-                           -H "Content-Type: $(file -b --mime-type $FILE)" \
-                           --data-binary @$FILE \
-                           "https://uploads.github.com/repos/Kamatera/terraform-provider-kamatera/releases/${RELEASE_ID}/assets?name=$(basename $FILE)" | tee /dev/stderr | jq -r .state)" == "uploaded" ]; then
-                echo Release asset $FILE uploaded successfuly
-              else
-                echo Failed to upload release asset $FILE
-                exit 1
-              fi
-            done
-          fi
+#  publish:
+#    runs-on: ubuntu-18.04
+#    needs:
+#      - build
+#      - integration-test
+#    steps:
+#      - uses: actions/download-artifact@v1
+#        with:
+#          name: build
+#      - env:
+#          KAMATERA_MACHINE_USER_TOKEN: ${{ secrets.KAMATERA_MACHINE_USER_TOKEN }}
+#        run: |
+#          if [[ $GITHUB_REF == refs/tags/* ]]; then
+#            VERSION="$(echo $GITHUB_REF | sed -e 's:refs/tags/::')" &&\
+#            RELEASE_ID="$(curl -sL https://api.github.com/repos/Kamatera/terraform-provider-kamatera/releases/tags/${VERSION} | jq -r .id)" &&\
+#            echo uploading binaries to release RELEASE_ID=$RELEASE_ID &&\
+#            cd build &&\
+#            for FILE in `ls *.zip`; do
+#              if [ "$(curl -H "Authorization: token $KAMATERA_MACHINE_USER_TOKEN" \
+#                           -H "Content-Type: $(file -b --mime-type $FILE)" \
+#                           --data-binary @$FILE \
+#                           "https://uploads.github.com/repos/Kamatera/terraform-provider-kamatera/releases/${RELEASE_ID}/assets?name=$(basename $FILE)" | tee /dev/stderr | jq -r .state)" == "uploaded" ]; then
+#                echo Release asset $FILE uploaded successfuly
+#              else
+#                echo Failed to upload release asset $FILE
+#                exit 1
+#              fi
+#            done
+#          fi
 
   coverage:
     runs-on: ubuntu-latest
