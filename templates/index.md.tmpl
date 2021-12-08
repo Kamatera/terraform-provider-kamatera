@@ -12,6 +12,14 @@ The Kamatera provider is used to interact with the resources provided by [Kamate
 ## Example Usage
 
 ```terraform
+terraform {
+  required_providers {
+    kamatera = {
+      source = "Kamatera/kamatera"
+    }
+  }
+}
+
 provider "kamatera" {
   api_client_id = var.api_client_id  # optionally use KAMATERA_API_CLIENT_ID env var
   api_secret = var.api_secret  # optionally use KAMATERA_API_SECRET env var
