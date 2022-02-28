@@ -149,6 +149,10 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"startup_script": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -210,6 +214,7 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		BillingCycle:     d.Get("billing_cycle").(string),
 		MonthlyPackage:   d.Get("monthly_traffic_package").(string),
 		PowerOn:          powerOn,
+		ScriptFile:       d.Get("startup_script").(string),
 	}
 	result, err := request(provider, "POST", "service/server", body)
 	if err != nil {
@@ -378,6 +383,10 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	if d.HasChange("ssh_pubkey") {
 		// TODO: implement
 		return diag.Errorf("changing server ssh_pubkey is not supported yet")
+	}
+
+	if d.HasChange("startup_script") {
+		return diag.Errorf("changing server startup_script is not supported")
 	}
 
 	oldBillingCycle := ""

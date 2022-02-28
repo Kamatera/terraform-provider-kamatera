@@ -36,6 +36,7 @@ description: |-
 - **power_on** (Boolean)
 - **ram_mb** (Number)
 - **ssh_pubkey** (String)
+- **startup_script** (String)
 
 ### Read-Only
 

@@ -54,6 +54,7 @@ resource "kamatera_server" "my_server" {
   billing_cycle = "monthly"
   image_id = data.kamatera_image.ubuntu_1804.id
   password = "Aa123456789!"
+  startup_script = "echo hello from startup script > /var/hello.txt"
 }
 ```
 

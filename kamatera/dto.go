@@ -22,6 +22,7 @@ type createServerPostValues struct {
 	BillingCycle     string  `json:"billingcycle"`
 	MonthlyPackage   string  `json:"monthlypackage"`
 	PowerOn          string  `json:"poweronaftercreate"`
+	ScriptFile       string  `json:"script-file"`
 }
 
 type powerOperationServerPostValues struct {

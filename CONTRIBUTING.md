@@ -2,6 +2,8 @@
 
 * Install [Golang](https://golang.org/)
 * Clone repo
+* Edit the `Makefile` and set latest version in `VERSION`
 * Build: `make build`
-* Set the built binary in your PATH
 * Run terraform
+* Update docs: `go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs`
+* Commit, Push, Publish release
