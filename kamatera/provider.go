@@ -18,6 +18,7 @@ func Provider() *schema.Provider {
 	return &schema.Provider{
 		ResourcesMap: map[string]*schema.Resource{
 			"kamatera_server": resourceServer(),
+			"kamatera_network": resourceNetwork(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"kamatera_datacenter": dataSourceDatacenter(),

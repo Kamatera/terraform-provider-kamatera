@@ -17,48 +17,48 @@ description: |-
 
 ### Required
 
-- **datacenter_id** (String)
-- **image_id** (String)
-- **name** (String)
+- `datacenter_id` (String)
+- `image_id` (String)
+- `name` (String)
 
 ### Optional
 
-- **billing_cycle** (String)
-- **cpu_cores** (Number)
-- **cpu_type** (String)
-- **daily_backup** (Boolean)
-- **disk_sizes_gb** (List of Number)
-- **id** (String) The ID of this resource.
-- **managed** (Boolean)
-- **monthly_traffic_package** (String)
-- **network** (Block List, Max: 4) (see [below for nested schema](#nestedblock--network))
-- **password** (String, Sensitive)
-- **power_on** (Boolean)
-- **ram_mb** (Number)
-- **ssh_pubkey** (String)
-- **startup_script** (String)
+- `billing_cycle` (String)
+- `cpu_cores` (Number)
+- `cpu_type` (String)
+- `daily_backup` (Boolean)
+- `disk_sizes_gb` (List of Number)
+- `managed` (Boolean)
+- `monthly_traffic_package` (String)
+- `network` (Block List, Max: 4) (see [below for nested schema](#nestedblock--network))
+- `password` (String, Sensitive)
+- `power_on` (Boolean)
+- `ram_mb` (Number)
+- `ssh_pubkey` (String)
+- `startup_script` (String)
 
 ### Read-Only
 
-- **attached_networks** (List of Object) (see [below for nested schema](#nestedatt--attached_networks))
-- **generated_password** (String, Sensitive)
-- **internal_server_id** (String)
-- **price_hourly_off** (String)
-- **price_hourly_on** (String)
-- **price_monthly_on** (String)
-- **private_ips** (List of String)
-- **public_ips** (List of String)
+- `attached_networks` (List of Object) (see [below for nested schema](#nestedatt--attached_networks))
+- `generated_password` (String, Sensitive)
+- `id` (String) The ID of this resource.
+- `internal_server_id` (String)
+- `price_hourly_off` (String)
+- `price_hourly_on` (String)
+- `price_monthly_on` (String)
+- `private_ips` (List of String)
+- `public_ips` (List of String)
 
 <a id="nestedblock--network"></a>
 ### Nested Schema for `network`
 
 Required:
 
-- **name** (String)
+- `name` (String)
 
 Optional:
 
-- **ip** (String)
+- `ip` (String)
 
 
 <a id="nestedatt--attached_networks"></a>
@@ -66,7 +66,7 @@ Optional:
 
 Read-Only:
 
-- **ips** (List of String)
-- **network** (String)
+- `ips` (List of String)
+- `network` (String)
 
 

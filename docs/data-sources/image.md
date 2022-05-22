@@ -17,12 +17,15 @@ description: |-
 
 ### Required
 
-- **datacenter_id** (String)
+- `datacenter_id` (String)
 
 ### Optional
 
-- **code** (String)
-- **id** (String) The ID of this resource.
-- **os** (String)
+- `code` (String)
+- `os` (String)
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 
