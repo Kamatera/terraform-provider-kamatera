@@ -1,6 +1,6 @@
 module github.com/kamatera/terraform-provider-kamatera
 
-go 1.14
+go 1.16
 
 require (
 	github.com/hashicorp/go-cleanhttp v0.5.2
