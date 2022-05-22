@@ -2,13 +2,54 @@ package kamatera
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+type createNetworkPostValues struct {
+	Datacenter string `json:"datacenter"`
+	Name string `json:"name"`
+	SubnetIp string `json:"subnetIp"`
+	SubnetBit int `json:"subnetBit"`
+	Gateway string `json:"gateway"`
+	Dns1 string `json:"dns1"`
+	Dns2 string `json:"dns2"`
+	SubnetDescription string `json:"subnetDescription"`
+}
+
+type deleteNetworkPostValues struct {
+	Datacenter string `json:"datacenter"`
+	Id int `json:"id"`
+}
+
+type createSubnetPostValues struct {
+	Datacenter string `json:"datacenter"`
+	VlanId string `json:"vlanId"`
+	SubnetIp string `json:"subnetIp"`
+	SubnetBit int `json:"subnetBit"`
+	Gateway string `json:"gateway"`
+	Dns1 string `json:"dns1"`
+	Dns2 string `json:"dns2"`
+	SubnetDescription string `json:"subnetDescription"`
+}
+
+type editSubnetPostValues struct {
+	Datacenter string `json:"datacenter"`
+	VlanId string `json:"vlanId"`
+	SubnetId int `json:"subnetId"`
+	SubnetIp string `json:"subnetIp"`
+	SubnetBit int `json:"subnetBit"`
+	Gateway string `json:"gateway"`
+	Dns1 string `json:"dns1"`
+	Dns2 string `json:"dns2"`
+	SubnetDescription string `json:"subnetDescription"`
+}
+
+type delSubnetPostValues struct {
+	SubnetId int `json:"subnetId"`
+}
 
 func resourceNetwork() *schema.Resource {
 	return &schema.Resource{
@@ -22,52 +63,53 @@ func resourceNetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"full_name": {
+				Type: schema.TypeString,
+				Computed: true,
+			},
 			"datacenter_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"subnets": {
+			"subnet": {
 				Type:     schema.TypeList,
+				MinItems: 0,
 				MaxItems: 500,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"subnetIp": {
+						"ip": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
-						"subnetBit": {
+						"bit": {
 							Type:     schema.TypeInt,
 							Required: true,
 						},
 						"gateway": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 						"dns1": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 						"dns2": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
-						"subnetDescription": {
+						"description": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
-						"subnetId": {
+						"id": {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
 					},
 				},
-				Optional: true,
 			},
-			"id": {
-				Type:     schema.TypeInt,
-				Computed: true,
-			},
-			"vlanId": {
+			"network_id": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
@@ -77,325 +119,241 @@ func resourceNetwork() *schema.Resource {
 
 func resourceNetworkCreate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	provider := m.(*ProviderConfig)
-
+	subnets := d.Get("subnet").([]interface{})
+	if len(subnets) < 1 {
+		return diag.Errorf("when creating a new network, at least 1 subnet is required")
+	}
+	subnetDescs := make(map[string]bool)
+	for _, subnet := range subnets {
+		subnetDescs[subnet.(map[string]interface{})["description"].(string)] = true
+	}
+	if len(subnetDescs) != len(subnets) {
+		return diag.Errorf("each subnet must have a unique description")
+	}
+	firstSubnet := subnets[0].(map[string]interface{})
+	body := &createNetworkPostValues{
+		Datacenter: d.Get("datacenter_id").(string),
+		Name: d.Get("name").(string),
+		SubnetIp: firstSubnet["ip"].(string),
+		SubnetBit: firstSubnet["bit"].(int),
+		Gateway: firstSubnet["gateway"].(string),
+		Dns1: firstSubnet["dns1"].(string),
+		Dns2: firstSubnet["dns2"].(string),
+		SubnetDescription: firstSubnet["description"].(string),
+	}
+	result, err := request(provider, "POST", "service/network/create", body)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	response := result.(map[string]interface{})
+	var res map[string]interface{}
+	err = json.Unmarshal([]byte(response["res"].(string)), &res)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(fmt.Sprintf("%v", res["networkId"].(float64)))
+	firstSubnet["id"] = res["subnetId"].(float64)
+	for _, subnet := range subnets {
+		if subnet.(map[string]interface{})["description"].(string) != firstSubnet["description"] {
+			_, err := addSubnet(provider, d, subnet.(map[string]interface{}))
+			if err != nil {
+				return err
+			}
+		}
+	}
+	d.Set("subnet", subnets)
 	return resourceNetworkRead(ctx, d, m)
 }
 
 func resourceNetworkRead(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	provider := m.(*ProviderConfig)
-	var body listServersPostValues
-
-	if d.Get("internal_server_id").(string) == "" {
-		body = listServersPostValues{Name: d.Id()}
-	} else {
-		body = listServersPostValues{ID: d.Get("internal_server_id").(string)}
-	}
-	result, err := request(provider, "POST", fmt.Sprintf("service/server/info"), body)
+	datacenter := d.Get("datacenter_id").(string)
+	id := d.Id()
+	result, err := request(provider, "GET", fmt.Sprintf("service/networks?datacenter=%s", datacenter), nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	servers := result.([]interface{})
-	if len(servers) != 1 {
-		return diag.Errorf("failed to find server")
-	}
-	server := servers[0].(map[string]interface{})
-
-	d.Set("id", server["id"].(string))
-
-	d.Set("name", server["name"].(string))
-
-	cpu := server["cpu"].(string)
-	d.Set("cpu_type", cpu[1:2])
-	{
-		cpuCores, err := strconv.ParseFloat(cpu[0:1], 16)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		d.Set("cpu_cores", cpuCores)
-	}
-
-	{
-		diskSizes := server["diskSizes"].([]interface{})
-		var diskSizesString []float64
-		for _, v := range diskSizes {
-			diskSizesString = append(diskSizesString, v.(float64))
-		}
-		d.Set("disk_sizes_gb", diskSizesString)
-	}
-
-	d.Set("power_on", server["power"].(string) == "on")
-	d.Set("datacenter_id", server["datacenter"].(string))
-	d.Set("ram_mb", server["ram"].(float64))
-	d.Set("daily_backup", server["backup"].(string) == "1")
-	d.Set("managed", server["managed"].(string) == "1")
-	d.Set("billing_cycle", server["billing"].(string))
-	d.Set("monthly_traffic_package", server["traffic"].(string))
-	d.Set("internal_server_id", server["id"].(string))
-	d.Set("price_monthly_on", server["priceMonthlyOn"].(string))
-	d.Set("price_hourly_on", server["priceHourlyOn"].(string))
-	d.Set("price_hourly_off", server["priceHourlyOff"].(string))
-
-	networks := server["networks"].([]interface{})
-	var publicIPs []string
-	var privateIPs []string
-	var attachedNetworks []interface{}
-	for _, network := range networks {
-		network := network.(map[string]interface{})
-		attachedNetworks = append(attachedNetworks, network)
-		if strings.Index(network["network"].(string), "wan-") == 0 {
-			for _, ip := range network["ips"].([]interface{}) {
-				publicIPs = append(publicIPs, ip.(string))
-			}
-		} else {
-			for _, ip := range network["ips"].([]interface{}) {
-				privateIPs = append(privateIPs, ip.(string))
-			}
+	var network map[string]interface{}
+	networks := result.([]interface{})
+	for _, network_ := range networks {
+		network__ := network_.(map[string]interface{})
+		if fmt.Sprintf("%v", network__["vlanId"].(float64)) == id {
+			network = network__
+			break
 		}
 	}
-	d.Set("public_ips", publicIPs)
-	d.Set("private_ips", privateIPs)
-	d.Set("attached_networks", attachedNetworks)
-
+	if network == nil {
+		return diag.Errorf("Did not find network %v in datacenter %s", id, datacenter)
+	}
+	networkIds := network["ids"].([]interface{})
+	if len(networkIds) != 1 {
+		return diag.Errorf("Invalid ids returned from network list")
+	}
+	networkNames := network["names"].([]interface{})
+	if len(networkNames) != 1 {
+		return diag.Errorf("Invalid names returned from network list")
+	}
+	d.Set("network_id", networkIds[0].(float64))
+	d.Set("full_name", networkNames[0].(string))
+	subnetsResult, err := request(provider, "GET", fmt.Sprintf("service/network/subnets?datacenter=%s&vlanId=%s", datacenter, id), nil)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	var subnets []map[string]interface{}
+	subnetDescs := make(map[string]bool)
+	for _, subnet_ := range subnetsResult.([]interface{}) {
+		subnet__ := subnet_.(map[string]interface{})
+		description := subnet__["subnetDescription"].(string)
+		subnets = append(subnets, map[string]interface{}{
+			"ip": subnet__["subnetIp"].(string),
+			"bit": subnet__["subnetBit"].(float64),
+			"gateway": subnet__["gateway"].(string),
+			"dns1": subnet__["dns1"].(string),
+			"dns2": subnet__["dns2"].(string),
+			"description": description,
+			"id": subnet__["subnetId"].(float64),
+		})
+		subnetDescs[description] = true
+	}
+	if len(subnetDescs) != len(subnets) {
+		return diag.Errorf("Invalid subnet description - cannot differentiate between subnets based on subnet descriptions")
+	}
+	d.Set("subnet", subnets)
 	return
 }
 
-func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
-	newCPU := ""
-	{
-		var newCPUType interface{}
-		{
-			o, n := d.GetChange("cpu_type")
-			if d.HasChange("cpu_type") {
-				newCPUType = n
-			} else {
-				newCPUType = o
-			}
-		}
-		var newCPUCores interface{}
-		{
-			o, n := d.GetChange("cpu_cores")
-			if d.HasChange("cpu_cores") {
-				newCPUCores = n
-			} else {
-				newCPUCores = o
-			}
-		}
-		if d.HasChanges("cpu_type", "cpu_cores") {
-			newCPU = fmt.Sprintf("%v%v", newCPUCores, newCPUType)
-		}
-	}
-
-	var newRAM float64
-	if d.HasChange("ram_mb") {
-		_, n := d.GetChange("ram_mb")
-		newRAM = n.(float64)
-	}
-
-	if d.HasChange("image_id") {
-		// TODO: Implement
-		return diag.Errorf("changing server image is not supported yet")
-	}
-
-	if d.HasChange("network") {
-		// TODO: Implement
-		return diag.Errorf("changing server networks is not supported yet")
-	}
-
-	if d.HasChange("ssh_pubkey") {
-		// TODO: implement
-		return diag.Errorf("changing server ssh_pubkey is not supported yet")
-	}
-
-	if d.HasChange("startup_script") {
-		return diag.Errorf("changing server startup_script is not supported")
-	}
-
-	oldBillingCycle := ""
-	newBillingCycle := ""
-	if d.HasChange("billing_cycle") {
-		o, n := d.GetChange("billing_cycle")
-		oldBillingCycle = o.(string)
-		newBillingCycle = n.(string)
-	}
-
-	oldTrafficPackage := ""
-	newTrafficPackage := ""
-	if d.HasChange("monthly_traffic_package") {
-		o, n := d.GetChange("monthly_traffic_package")
-		oldTrafficPackage = o.(string)
-		newTrafficPackage = n.(string)
-	}
-
-	if d.HasChange("datacenter_id") {
-		return diag.Errorf("changing datacenter is not supported yet")
-	}
-
-	newDailyBackup := ""
-	if d.HasChange("daily_backup") {
-		newDailyBackup = "no"
-		if d.Get("daily_backup").(bool) {
-			newDailyBackup = "yes"
-		}
-	}
-
-	newManaged := ""
-	if d.HasChange("managed") {
-		newManaged = "no"
-		if d.Get("managed").(bool) {
-			newManaged = "yes"
-		}
-	}
-
+func resourceNetworkUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) (diags diag.Diagnostics) {
 	provider := m.(*ProviderConfig)
-	if err := serverConfigure(
-		provider,
-		d.Get("internal_server_id").(string),
-		newCPU,
-		newRAM,
-		oldTrafficPackage, newTrafficPackage,
-		oldBillingCycle, newBillingCycle,
-		newDailyBackup,
-		newManaged,
-	); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if d.HasChange("disk_sizes_gb") {
-		o, n := d.GetChange("disk_sizes_gb")
-
-		op, err := calDiskChangeOperation(o, n)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		err = changeDisks(provider, d.Get("internal_server_id").(string), op)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("password") {
-		o, n := d.GetChange("password")
-
-		err := serverChangePassword(provider, d.Get("internal_server_id").(string), n.(string))
-		if err != nil {
-			d.Set("password", o)
-			return diag.FromErr(err)
-		}
-
-		d.Set("password", n)
-	}
-
 	if d.HasChange("name") {
-		_, n := d.GetChange("name")
-		if err := renameServer(provider, d.Get("internal_server_id").(string), n.(string)); err != nil {
-			return diag.FromErr(err)
-		}
-		d.Set("name", n)
+		return diag.Errorf("changing network name is not supported")
 	}
-
-	if d.HasChange("power_on") {
-		if d.Get("power_on").(bool) {
-			if err := changeServerPower(provider, d.Get("internal_server_id").(string), "poweron"); err != nil {
-				return diag.FromErr(err)
+	if d.HasChange("datacenter_id") {
+		return diag.Errorf("changing network datacenter is not supported")
+	}
+	if d.HasChange("subnet") {
+		oldSubnets, newSubnets := d.GetChange("subnet")
+		newSubnetsByDescription := make(map[string]map[string]interface{})
+		oldSubnetsByDescription := make(map[string]map[string]interface{})
+		for _, newSubnet := range newSubnets.([]interface{}) {
+			newSubnet := newSubnet.(map[string]interface{})
+			newSubnetsByDescription[newSubnet["description"].(string)] = newSubnet
+		}
+		for _, oldSubnet := range oldSubnets.([]interface{}) {
+			oldSubnet := oldSubnet.(map[string]interface{})
+			oldSubnetsByDescription[oldSubnet["description"].(string)] = oldSubnet
+		}
+		if len(oldSubnets.([]interface{})) != len(oldSubnetsByDescription) || len(newSubnets.([]interface{})) != len(newSubnetsByDescription) {
+			return diag.Errorf("Invalid subnet descriptions - cannot identify unique subnets based on descriptions")
+		}
+		for description, newSubnet := range newSubnetsByDescription {
+			oldSubnet, oldExists := oldSubnetsByDescription[description]
+			if oldExists {
+				if isSubnetDifferent(oldSubnet, newSubnet) {
+					err := editSubnet(provider, d, newSubnet)
+					if err != nil {
+						return err
+					}
+				}
+			} else {
+				newSubnetId, err := addSubnet(provider, d, newSubnet)
+				if err != nil {
+					return err
+				}
+				newSubnet["id"] = newSubnetId
 			}
-		} else {
-			if err := changeServerPower(provider, d.Get("internal_server_id").(string), "poweroff"); err != nil {
-				return diag.FromErr(err)
+		}
+		for description, oldSubnet := range oldSubnetsByDescription {
+			_, newExists := newSubnetsByDescription[description]
+			if !newExists {
+				err := delSubnet(provider, d, oldSubnet)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
-
-	return resourceServerRead(ctx, d, m)
+	return resourceNetworkRead(ctx, d, m)
 }
 
-func resourceServerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceNetworkDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	provider := m.(*ProviderConfig)
-	err := changeServerPower(provider, d.Get("internal_server_id").(string), "terminate")
+	for _, subnet := range d.Get("subnet").([]interface{}) {
+		err := delSubnet(provider, d, subnet.(map[string]interface{}))
+		if err != nil {
+			return err
+		}
+	}
+	body := &deleteNetworkPostValues{
+		Datacenter: d.Get("datacenter_id").(string),
+		Id: d.Get("network_id").(int),
+	}
+	_, err := request(provider, "POST", "service/network/delete", body)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	return nil
 }
 
-func serverConfigure(
-	provider *ProviderConfig, internalServerId string, newCpu string, newRam float64,
-	oldTrafficPackage string, newTrafficPackage string, oldBillingCycle string, newBillingCycle string,
-	newDailyBackup string, newManaged string,
-) error {
-	if newCpu != "" {
-		if e := postServerConfigure(
-			provider,
-			configureServerPostValues{ID: internalServerId, CPU: newCpu},
-		); e != nil {
-			return e
-		}
-	}
-
-	if newRam != 0 {
-		if e := postServerConfigure(
-			provider,
-			configureServerPostValues{ID: internalServerId, RAM: newRam},
-		); e != nil {
-			return e
-		}
-	}
-
-	if newTrafficPackage != "" || newBillingCycle != "" {
-		billingCycle := ""
-		if newBillingCycle != "" {
-			billingCycle = newBillingCycle
-		}
-		trafficPackage := oldTrafficPackage
-		if newTrafficPackage != "" {
-			trafficPackage = newTrafficPackage
-		}
-		if e := postServerConfigure(
-			provider,
-			configureServerPostValues{ID: internalServerId, MonthlyPackage: trafficPackage, BillingCycle: billingCycle},
-		); e != nil {
-			return e
-		}
-	}
-
-	if newDailyBackup != "" {
-		if e := postServerConfigure(
-			provider,
-			configureServerPostValues{ID: internalServerId, DailyBackup: newDailyBackup},
-		); e != nil {
-			return e
-		}
-	}
-
-	if newManaged != "" {
-		if e := postServerConfigure(
-			provider,
-			configureServerPostValues{ID: internalServerId, Managed: newManaged},
-		); e != nil {
-			return e
-		}
-	}
-
-	return nil
+func isSubnetDifferent(subnet1 map[string]interface{}, subnet2 map[string]interface{}) bool {
+	return subnet1["ip"].(string) != subnet2["ip"].(string) ||
+			subnet1["bit"].(int) != subnet2["bit"].(int) ||
+			subnet1["gateway"].(string) != subnet2["gateway"].(string) ||
+			subnet1["dns1"].(string) != subnet2["dns1"].(string) ||
+			subnet1["dns2"].(string) != subnet2["dns2"].(string)
 }
 
-func changeServerPower(provider *ProviderConfig, internalServerID string, operation string) error {
-	var body powerOperationServerPostValues
-	if operation == "terminate" {
-		body = powerOperationServerPostValues{ID: internalServerID, Force: true}
-	} else {
-		body = powerOperationServerPostValues{ID: internalServerID}
+func editSubnet(provider *ProviderConfig, d *schema.ResourceData, subnet map[string]interface{}) diag.Diagnostics {
+	body := &editSubnetPostValues{
+		Datacenter: d.Get("datacenter_id").(string),
+		VlanId: d.Id(),
+		SubnetId: subnet["id"].(int),
+		SubnetIp: subnet["ip"].(string),
+		SubnetBit: subnet["bit"].(int),
+		Gateway: subnet["gateway"].(string),
+		Dns1: subnet["dns1"].(string),
+		Dns2: subnet["dns2"].(string),
+		SubnetDescription: subnet["description"].(string),
 	}
-
-	result, err := request(provider, "POST", fmt.Sprintf("service/server/%s", operation), body)
+	_, err := request(provider, "POST", "service/network/subnet/edit", body)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
+	return nil
+}
 
-	commandIds := result.([]interface{})
-	_, err = waitCommand(provider, commandIds[0].(string))
 
-	return err
+func delSubnet(provider *ProviderConfig, d *schema.ResourceData, subnet map[string]interface{}) diag.Diagnostics {
+	body := &delSubnetPostValues{
+		SubnetId: subnet["id"].(int),
+	}
+	_, err := request(provider, "POST", "service/network/subnet/delete", body)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
+}
+
+
+func addSubnet(provider *ProviderConfig, d *schema.ResourceData, subnet map[string]interface{}) (float64, diag.Diagnostics) {
+	body := &createSubnetPostValues{
+		Datacenter: d.Get("datacenter_id").(string),
+		VlanId: d.Id(),
+		SubnetIp: subnet["ip"].(string),
+		SubnetBit: subnet["bit"].(int),
+		Gateway: subnet["gateway"].(string),
+		Dns1: subnet["dns1"].(string),
+		Dns2: subnet["dns2"].(string),
+		SubnetDescription: subnet["description"].(string),
+	}
+	result, err := request(provider, "POST", "service/network/subnet/create", body)
+	if err != nil {
+		return 0, diag.FromErr(err)
+	}
+	response := result.(map[string]interface{})
+	var res map[string]interface{}
+	err = json.Unmarshal([]byte(response["res"].(string)), &res)
+	if err != nil {
+		return 0, diag.FromErr(err)
+	}
+	return res["subnetId"].(float64), nil
 }
