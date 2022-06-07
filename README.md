@@ -10,7 +10,12 @@
 * [kamatera_datacenter data source](https://registry.terraform.io/providers/Kamatera/kamatera/latest/docs/data-sources/datacenter)
 * [kamatera_image data source](https://registry.terraform.io/providers/Kamatera/kamatera/latest/docs/data-sources/image)
 
-## Example Usage
+## Usage Guide
+
+### Example Usage
+
+This is an example end to end usage of common functionality, see sections below 
+for additional functionality examples.
 
 Set environment variables
 
@@ -62,4 +67,19 @@ Init and apply:
 
 ```
 terraform init && terraform apply
+```
+
+### Using a private image
+
+When creating a private image you can't use the `kamatera_image` data resource, instead specify the private image name
+directly in the server resource `image_id` argument.
+
+You can get the image name from Kamatare Console -> Hard Disk Library -> My Private Images
+
+```
+resource "kamatera_server" "my_server" {
+  ...
+  image_id = "my-private-image-name"
+  ...
+}
 ```
