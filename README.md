@@ -194,15 +194,24 @@ data "kamatera_image" "ubuntu_1804" {
 
 ### Using a private image
 
-When creating a server from a private image you can't use the `kamatera_image` data resource, 
-instead specify the private image name directly in the server resource `image_id` argument.
+You can get the private image name from Kamatare Console -> Hard Disk Library -> My Private Images
 
-You can get the image name from Kamatare Console -> Hard Disk Library -> My Private Images
+You can then use this name to specify the image data source:
 
 ```
+data "kamatera_image" "my_private_image" {
+  datacenter_id = data.kamatera_datacenter.petach_tikva.id
+  private_image_name = "your-private-image-name"
+}
+```
+
+This image data source can then be used the same as a public image data source in the server resource:
+
+```
+# this defines the server resource with most configuration options
 resource "kamatera_server" "my_server" {
   ...
-  image_id = "my-private-image-name"
+  image_id = data.kamatera_image.my_private_image.id
   ...
 }
 ```

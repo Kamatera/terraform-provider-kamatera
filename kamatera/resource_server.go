@@ -21,22 +21,29 @@ func resourceServer() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "The server name.",
 			},
 			"datacenter_id": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "id attribute of datacenter data source.",
 			},
 			"cpu_type": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Description: "The CPU type - a single upper-case letter. See https://console.kamatera.com/pricing for " +
+					"available CPU types and description of each type.",
 			},
 			"cpu_cores": {
 				Type:     schema.TypeFloat,
 				Optional: true,
+				Description: "Number of CPU cores to allocate. See https://console.kamatera.com/pricing for a " +
+					"a description of the meaning of this value depending on the selected CPU type.",
 			},
 			"ram_mb": {
 				Type:     schema.TypeFloat,
 				Optional: true,
+				Description: "Amount of RAM to allocate in MB.",
 			},
 			"disk_sizes_gb": {
 				Type:     schema.TypeList,
@@ -44,39 +51,51 @@ func resourceServer() *schema.Resource {
 				MinItems: 1,
 				MaxItems: 4,
 				Optional: true,
+				Description: "List of disk sizes in GB, each item in the list will create a new disk in given " +
+					"size and attach it to the server.",
 			},
 			"billing_cycle": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "hourly",
+				Description: "hourly or monthly, see https://console.kamatera.com/pricing for details.",
 			},
 			"monthly_traffic_package": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				Description: "For advanced use-cases you can select a specific traffic package, depending on " +
+					"datacenter availability. See https://console.kamatera.com/pricing for details.",
 			},
 			"power_on": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
+				Description: "true by default, set to false to have the server created without powering it on.",
 			},
 			"image_id": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "id attribute of image data source",
 			},
 			"network": {
 				Type:     schema.TypeList,
 				MaxItems: 4,
+				Description: "Network interfaces to attach to the server. If not specified a single WAN interface with " +
+					"auto IP will be attached.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
 							Type:     schema.TypeString,
 							Required: true,
+							Description: "Set to 'wan' to attach a public internet interface with auto-allocated IP. " +
+								"To use a private network, set to full_name attribute of network data source",
 						},
 						"ip": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Default:  "auto",
+							Description: "The IP to use, leave unset or set to 'auto' to auto-allocate an IP",
 						},
 					},
 				},
@@ -86,37 +105,45 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
+				Description: "Set to true to enable daily backups.",
 			},
 			"managed": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
+				Description: "Set to true for managed support services.",
 			},
 			"password": {
 				Type:      schema.TypeString,
 				Optional:  true,
 				Sensitive: true,
+				Description: "The server root password.",
 			},
 			"ssh_pubkey": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Description: "SSH public key to allow access to the server without a password.",
 			},
 			"generated_password": {
 				Type:      schema.TypeString,
 				Computed:  true,
 				Sensitive: true,
+				Description: "In case password was not provided, an auto-generated password will be used.",
 			},
 			"price_monthly_on": {
 				Type:     schema.TypeString,
 				Computed: true,
+				Description: "The monthly price if server is turned on for the entire month.",
 			},
 			"price_hourly_on": {
 				Type:     schema.TypeString,
 				Computed: true,
+				Description: "The hourly price if server is turned on for the entire hour.",
 			},
 			"price_hourly_off": {
 				Type:     schema.TypeString,
 				Computed: true,
+				Description: "The hourly price if server is turned off for the entire hour.",
 			},
 			"attached_networks": {
 				Type: schema.TypeList,

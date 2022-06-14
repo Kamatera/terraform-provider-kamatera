@@ -17,14 +17,22 @@ func dataSourceDatacenter() *schema.Resource {
 			"id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Description: "It's recommended not to set this field, and instead use name/country combination.",
 			},
 			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Description: "Datacenter name, must be set with corresponding country, " +
+					"usually corresponds to the city name. To see available name/country combinations - " +
+					"leave the data source empty without any attributes and run terraform plan. The output " +
+					"will show a list of available values.",
 			},
 			"country": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Description: "Datacenter country. To see available name/country combinations - " +
+					"leave the data source empty without any attributes and run terraform plan. The output " +
+					"will show a list of available values.",
 			},
 		},
 	}

@@ -17,48 +17,48 @@ description: |-
 
 ### Required
 
-- `datacenter_id` (String)
-- `image_id` (String)
-- `name` (String)
+- **datacenter_id** (String) id attribute of datacenter data source.
+- **image_id** (String) id attribute of image data source
+- **name** (String) The server name.
 
 ### Optional
 
-- `billing_cycle` (String)
-- `cpu_cores` (Number)
-- `cpu_type` (String)
-- `daily_backup` (Boolean)
-- `disk_sizes_gb` (List of Number)
-- `managed` (Boolean)
-- `monthly_traffic_package` (String)
-- `network` (Block List, Max: 4) (see [below for nested schema](#nestedblock--network))
-- `password` (String, Sensitive)
-- `power_on` (Boolean)
-- `ram_mb` (Number)
-- `ssh_pubkey` (String)
-- `startup_script` (String)
+- **billing_cycle** (String) hourly or monthly, see https://console.kamatera.com/pricing for details.
+- **cpu_cores** (Number) Number of CPU cores to allocate. See https://console.kamatera.com/pricing for a a description of the meaning of this value depending on the selected CPU type.
+- **cpu_type** (String) The CPU type - a single upper-case letter. See https://console.kamatera.com/pricing for available CPU types and description of each type.
+- **daily_backup** (Boolean) Set to true to enable daily backups.
+- **disk_sizes_gb** (List of Number) List of disk sizes in GB, each item in the list will create a new disk in given size and attach it to the server.
+- **id** (String) The ID of this resource.
+- **managed** (Boolean) Set to true for managed support services.
+- **monthly_traffic_package** (String) For advanced use-cases you can select a specific traffic package, depending on datacenter availability. See https://console.kamatera.com/pricing for details.
+- **network** (Block List, Max: 4) Network interfaces to attach to the server. If not specified a single WAN interface with auto IP will be attached. (see [below for nested schema](#nestedblock--network))
+- **password** (String, Sensitive) The server root password.
+- **power_on** (Boolean) true by default, set to false to have the server created without powering it on.
+- **ram_mb** (Number) Amount of RAM to allocate in MB.
+- **ssh_pubkey** (String) SSH public key to allow access to the server without a password.
+- **startup_script** (String)
 
 ### Read-Only
 
-- `attached_networks` (List of Object) (see [below for nested schema](#nestedatt--attached_networks))
-- `generated_password` (String, Sensitive)
-- `id` (String) The ID of this resource.
-- `internal_server_id` (String)
-- `price_hourly_off` (String)
-- `price_hourly_on` (String)
-- `price_monthly_on` (String)
-- `private_ips` (List of String)
-- `public_ips` (List of String)
+- **attached_networks** (List of Object) (see [below for nested schema](#nestedatt--attached_networks))
+- **generated_password** (String, Sensitive) In case password was not provided, an auto-generated password will be used.
+- **internal_server_id** (String)
+- **price_hourly_off** (String) The hourly price if server is turned off for the entire hour.
+- **price_hourly_on** (String) The hourly price if server is turned on for the entire hour.
+- **price_monthly_on** (String) The monthly price if server is turned on for the entire month.
+- **private_ips** (List of String)
+- **public_ips** (List of String)
 
 <a id="nestedblock--network"></a>
 ### Nested Schema for `network`
 
 Required:
 
-- `name` (String)
+- **name** (String) Set to 'wan' to attach a public internet interface with auto-allocated IP. To use a private network, set to full_name attribute of network data source
 
 Optional:
 
-- `ip` (String)
+- **ip** (String) The IP to use, leave unset or set to 'auto' to auto-allocate an IP
 
 
 <a id="nestedatt--attached_networks"></a>
@@ -66,7 +66,7 @@ Optional:
 
 Read-Only:
 
-- `ips` (List of String)
-- `network` (String)
+- **ips** (List of String)
+- **network** (String)
 
 

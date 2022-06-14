@@ -17,11 +17,8 @@ description: |-
 
 ### Optional
 
-- `country` (String)
-- `name` (String)
-
-### Read-Only
-
-- `id` (String) The ID of this resource.
+- **country** (String) Datacenter country. To see available name/country combinations - leave the data source empty without any attributes and run terraform plan. The output will show a list of available values.
+- **id** (String) It's recommended not to set this field, and instead use name/country combination.
+- **name** (String) Datacenter name, must be set with corresponding country, usually corresponds to the city name. To see available name/country combinations - leave the data source empty without any attributes and run terraform plan. The output will show a list of available values.
 
 

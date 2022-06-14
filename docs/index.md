@@ -18,6 +18,6 @@ Usage guide and examples are available [here](https://github.com/Kamatera/terraf
 
 ### Optional
 
-- `api_client_id` (String) Kamatera API Client ID
-- `api_secret` (String, Sensitive) Kamatera API Secret
-- `api_url` (String) Kamatera API Url
+- **api_client_id** (String) Kamatera API Client ID
+- **api_secret** (String, Sensitive) Kamatera API Secret
+- **api_url** (String) Kamatera API Url

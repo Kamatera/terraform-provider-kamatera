@@ -62,49 +62,61 @@ func resourceNetwork() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "The network name.",
 			},
 			"full_name": {
 				Type: schema.TypeString,
 				Computed: true,
+				Description: "The full network name - used internally to uniquely identify the network." +
+					" This value should be used when attaching a network to a server.",
 			},
 			"datacenter_id": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "id attribute of datacenter data source",
 			},
 			"subnet": {
 				Type:     schema.TypeList,
 				MinItems: 0,
 				MaxItems: 500,
 				Optional: true,
+				Description: "IP Subnets to create and attach to this network.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ip": {
 							Type:     schema.TypeString,
 							Required: true,
+							Description: "The subnet IP is used with the subnet bit to determine the IP range for this subnet.",
 						},
 						"bit": {
 							Type:     schema.TypeInt,
 							Required: true,
+							Description: "The subnet bit is used with the subnt IP to determine the IP range for this subnet.",
 						},
 						"gateway": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Description: "Optional gateway IP from within the subnet IP range.",
 						},
 						"dns1": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Description: "Optional primary DNS server IP for this subnet.",
 						},
 						"dns2": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Description: "Optional secondary DNS server IP for this subnet.",
 						},
 						"description": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Description: "Optional description of this subnet.",
 						},
 						"id": {
 							Type:     schema.TypeInt,
 							Computed: true,
+							Description: "The unique subnet ID.",
 						},
 					},
 				},
