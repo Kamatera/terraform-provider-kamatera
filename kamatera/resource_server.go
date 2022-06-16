@@ -400,12 +400,12 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		newRAM = n.(float64)
 	}
 
-	if d.HasChange("image_id") {
+	if d.HasChange("image_id") && d.Get("image_id").(string) != "" {
 		// TODO: Implement
 		return diag.Errorf("changing server image is not supported yet")
 	}
 
-	if d.HasChange("network") {
+	if d.HasChange("network") && len(d.Get("network").([]interface{})) > 0 {
 		// TODO: Implement
 		return diag.Errorf("changing server networks is not supported yet")
 	}

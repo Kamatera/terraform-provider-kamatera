@@ -210,7 +210,13 @@ func resourceNetworkRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.Errorf("Invalid names returned from network list")
 	}
 	d.Set("network_id", networkIds[0].(float64))
-	d.Set("full_name", networkNames[0].(string))
+	fullName := networkNames[0].(string)
+	d.Set("full_name", fullName)
+	if d.Get("name").(string) == "" {
+		fullNameParts := strings.Split(fullName, "-")
+		d.Set("name", strings.Join(fullNameParts[2:], "-"))
+	}
+
 	subnetsResult, err := request(provider, "GET", fmt.Sprintf("service/network/subnets?datacenter=%s&vlanId=%s", datacenter, id), nil)
 	if err != nil {
 		return diag.FromErr(err)
