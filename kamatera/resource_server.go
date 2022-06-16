@@ -16,6 +16,9 @@ func resourceServer() *schema.Resource {
 		ReadContext:   resourceServerRead,
 		UpdateContext: resourceServerUpdate,
 		DeleteContext: resourceServerDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceServerImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -523,6 +526,19 @@ func resourceServerDelete(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	return nil
+}
+
+func resourceServerImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	d.Set("internal_server_id", d.Id())
+	diags := resourceServerRead(ctx, d, m)
+	if diags.HasError() {
+		var errorMessages []string
+		for i := range diags {
+			errorMessages = append(errorMessages, diags[i].Summary)
+		}
+		return nil, fmt.Errorf(strings.Join(errorMessages, ", "))
+	}
+	return []*schema.ResourceData{d}, nil
 }
 
 func serverConfigure(

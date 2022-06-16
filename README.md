@@ -215,3 +215,32 @@ resource "kamatera_server" "my_server" {
   ...
 }
 ```
+
+### Importing Existing Resources
+
+This module supports the terraform import subcommand to import existing resources to Terraform.
+
+#### Importing Network Resources
+
+To get the existing network resource ID, go to Kamatera Console -> My Cloud -> Networks.
+Choose the relevant datacenter. Note the datacenter ID - 2 uppercase letters.
+Note the network ID - under the ID column.
+
+The existing resource ID is `datacenter_id:network_id`
+
+For example, to import an existing network in datacenter IL with ID 432, you would run the following:
+
+```
+terraform import kamatera_network.my_network IL:432
+```
+
+#### Importing Server Resources
+
+To get the existing server resource ID, go to Kamatera Console -> My Cloud -> Servers.
+Click on the relevant server and note the Server ID.
+
+Example import command:
+
+```
+terraform import kamatera_server.my_server 12345678-aaaa-bbbb-cccc-1234567890ab
+```

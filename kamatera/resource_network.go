@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"strings"
 )
 
 type createNetworkPostValues struct {
@@ -57,6 +58,9 @@ func resourceNetwork() *schema.Resource {
 		ReadContext:   resourceNetworkRead,
 		UpdateContext: resourceNetworkUpdate,
 		DeleteContext: resourceNetworkDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceNetworkImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -304,6 +308,21 @@ func resourceNetworkDelete(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 	return nil
+}
+
+func resourceNetworkImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	idParts := strings.Split(d.Id(), ":")
+	d.Set("datacenter_id", idParts[0])
+	d.SetId(idParts[1])
+	diags := resourceNetworkRead(ctx, d, m)
+	if diags.HasError() {
+		var errorMessages []string
+		for i := range diags {
+			errorMessages = append(errorMessages, diags[i].Summary)
+		}
+		return nil, fmt.Errorf(strings.Join(errorMessages, ", "))
+	}
+	return []*schema.ResourceData{d}, nil
 }
 
 func isSubnetDifferent(subnet1 map[string]interface{}, subnet2 map[string]interface{}) bool {
