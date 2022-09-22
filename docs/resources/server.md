@@ -3,12 +3,12 @@
 page_title: "kamatera_server Resource - terraform-provider-kamatera"
 subcategory: ""
 description: |-
-  
+  It's recommended to use our server configuration interface https://kamatera.github.io/kamateratoolbox/serverconfiggen.html?configformat=terraform which provides ready to use Terraform templates with valid configuration options and identifiers according to your selection.
 ---
 
 # kamatera_server (Resource)
 
-
+It's recommended to use our [server configuration interface](https://kamatera.github.io/kamateratoolbox/serverconfiggen.html?configformat=terraform) which provides ready to use Terraform templates with valid configuration options and identifiers according to your selection.
 
 
 

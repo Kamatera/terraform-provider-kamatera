@@ -19,6 +19,11 @@ func resourceServer() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceServerImport,
 		},
+		Description: "It's recommended to use our " +
+			"[server configuration interface]" +
+			"(https://kamatera.github.io/kamateratoolbox/serverconfiggen.html?configformat=terraform) " +
+			"which provides ready to use Terraform templates with valid configuration options and identifiers " +
+			"according to your selection.",
 
 		Schema: map[string]*schema.Schema{
 			"name": {
