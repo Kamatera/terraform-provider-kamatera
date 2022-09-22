@@ -12,6 +12,10 @@
 
 ## Usage Guide
 
+To create a server resource, it's recommended to use our 
+[server configuration interface](https://kamatera.github.io/kamateratoolbox/serverconfiggen.html?configformat=terraform) 
+which provides ready to use Terraform templates with valid configuration options and identifiers according to your selection.
+
 ### Example Usage
 
 This is an example end to end usage of common functionality, see sections below 
