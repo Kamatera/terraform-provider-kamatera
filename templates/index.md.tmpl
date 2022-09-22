@@ -9,6 +9,10 @@ description: |-
 
 The Kamatera provider is used to interact with the resources provided by [Kamatera Cloud](https://www.kamatera.com/express/compute/).
 
+To create a server resource, it's recommended to use our 
+[server configuration interface](https://kamatera.github.io/kamateratoolbox/serverconfiggen.html?configformat=terraform) 
+which provides ready to use Terraform templates with valid configuration options and identifiers according to your selection.
+
 ## Usage Guide
 
 Usage guide and examples are available [here](https://github.com/Kamatera/terraform-provider-kamatera/blob/master/README.md#usage-guide).
