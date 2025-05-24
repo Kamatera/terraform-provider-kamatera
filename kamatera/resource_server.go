@@ -319,9 +319,9 @@ func resourceServerRead(ctx context.Context, d *schema.ResourceData, m interface
 	d.Set("name", server["name"].(string))
 
 	cpu := server["cpu"].(string)
-	d.Set("cpu_type", cpu[1:2])
+	d.Set("cpu_type", cpu[len(cpu)-1:])
 	{
-		cpuCores, err := strconv.ParseFloat(cpu[0:1], 16)
+		cpuCores, err := strconv.ParseFloat(cpu[:len(cpu)-1], 16)
 		if err != nil {
 			return diag.FromErr(err)
 		}
