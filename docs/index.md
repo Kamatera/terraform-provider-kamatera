@@ -22,9 +22,9 @@ Usage guide and examples are available [here](https://github.com/Kamatera/terraf
 
 ### Required
 
-- **api_client_id** (String) Kamatera API Client ID
-- **api_secret** (String, Sensitive) Kamatera API Secret
+- `api_client_id` (String) Kamatera API Client ID
+- `api_secret` (String, Sensitive) Kamatera API Secret
 
 ### Optional
 
-- **api_url** (String) Kamatera API Url
+- `api_url` (String) Kamatera API Url
