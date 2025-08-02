@@ -52,10 +52,10 @@ data "kamatera_datacenter" "toronto" {
 # define the server image we will create the server with
 # see the section below "Listing available public images" for more details
 # also see "Using a private image" if you want to use a private image you created yourself
-data "kamatera_image" "ubuntu_1804" {
+data "kamatera_image" "ubuntu_2404" {
   datacenter_id = data.kamatera_datacenter.toronto.id
   os = "Ubuntu"
-  code = "18.04 64bit"
+  code = "24.04 64bit"
 }
 
 # create a private network to use with the server
@@ -103,7 +103,7 @@ resource "kamatera_server" "my_server" {
   ram_mb = 2048
   disk_sizes_gb = [15, 20]
   billing_cycle = "monthly"
-  image_id = data.kamatera_image.ubuntu_1804.id
+  image_id = data.kamatera_image.ubuntu_2404.id
   password = "Aa123456789!"
   startup_script = "echo hello from startup script > /var/hello.txt"
   

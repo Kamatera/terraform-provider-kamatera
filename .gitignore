@@ -9,3 +9,4 @@ cloudcli*
 terraform
 .envrc
 .terraform.lock.hcl
+/.data/

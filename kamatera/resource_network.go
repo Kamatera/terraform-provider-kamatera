@@ -6,45 +6,47 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"regexp"
 	"strings"
 )
 
 type createNetworkPostValues struct {
-	Datacenter string `json:"datacenter"`
-	Name string `json:"name"`
-	SubnetIp string `json:"subnetIp"`
-	SubnetBit int `json:"subnetBit"`
-	Gateway string `json:"gateway"`
-	Dns1 string `json:"dns1"`
-	Dns2 string `json:"dns2"`
+	Datacenter        string `json:"datacenter"`
+	Name              string `json:"name"`
+	SubnetIp          string `json:"subnetIp"`
+	SubnetBit         int    `json:"subnetBit"`
+	Gateway           string `json:"gateway"`
+	Dns1              string `json:"dns1"`
+	Dns2              string `json:"dns2"`
 	SubnetDescription string `json:"subnetDescription"`
 }
 
 type deleteNetworkPostValues struct {
 	Datacenter string `json:"datacenter"`
-	Id int `json:"id"`
+	Id         int    `json:"id"`
 }
 
 type createSubnetPostValues struct {
-	Datacenter string `json:"datacenter"`
-	VlanId string `json:"vlanId"`
-	SubnetIp string `json:"subnetIp"`
-	SubnetBit int `json:"subnetBit"`
-	Gateway string `json:"gateway"`
-	Dns1 string `json:"dns1"`
-	Dns2 string `json:"dns2"`
+	Datacenter        string `json:"datacenter"`
+	VlanId            string `json:"vlanId"`
+	SubnetIp          string `json:"subnetIp"`
+	SubnetBit         int    `json:"subnetBit"`
+	Gateway           string `json:"gateway"`
+	Dns1              string `json:"dns1"`
+	Dns2              string `json:"dns2"`
 	SubnetDescription string `json:"subnetDescription"`
 }
 
 type editSubnetPostValues struct {
-	Datacenter string `json:"datacenter"`
-	VlanId string `json:"vlanId"`
-	SubnetId int `json:"subnetId"`
-	SubnetIp string `json:"subnetIp"`
-	SubnetBit int `json:"subnetBit"`
-	Gateway string `json:"gateway"`
-	Dns1 string `json:"dns1"`
-	Dns2 string `json:"dns2"`
+	Datacenter        string `json:"datacenter"`
+	VlanId            string `json:"vlanId"`
+	SubnetId          int    `json:"subnetId"`
+	SubnetIp          string `json:"subnetIp"`
+	SubnetBit         int    `json:"subnetBit"`
+	Gateway           string `json:"gateway"`
+	Dns1              string `json:"dns1"`
+	Dns2              string `json:"dns2"`
 	SubnetDescription string `json:"subnetDescription"`
 }
 
@@ -64,62 +66,66 @@ func resourceNetwork() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "The network name.",
+				ValidateFunc: validation.All(
+					validation.StringLenBetween(3, 20),
+					validation.StringMatch(regexp.MustCompile(`^[a-z0-9-.]+$`), "must contain only lowercase letters, digits, dashes (-) and dots (.)"),
+				),
 			},
 			"full_name": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Computed: true,
 				Description: "The full network name - used internally to uniquely identify the network." +
 					" This value should be used when attaching a network to a server.",
 			},
 			"datacenter_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "id attribute of datacenter data source",
 			},
 			"subnet": {
-				Type:     schema.TypeList,
-				MinItems: 0,
-				MaxItems: 500,
-				Optional: true,
+				Type:        schema.TypeList,
+				MinItems:    0,
+				MaxItems:    500,
+				Optional:    true,
 				Description: "IP Subnets to create and attach to this network.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ip": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
 							Description: "The subnet IP is used with the subnet bit to determine the IP range for this subnet.",
 						},
 						"bit": {
-							Type:     schema.TypeInt,
-							Required: true,
+							Type:        schema.TypeInt,
+							Required:    true,
 							Description: "The subnet bit is used with the subnt IP to determine the IP range for this subnet.",
 						},
 						"gateway": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:        schema.TypeString,
+							Optional:    true,
 							Description: "Optional gateway IP from within the subnet IP range.",
 						},
 						"dns1": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:        schema.TypeString,
+							Optional:    true,
 							Description: "Optional primary DNS server IP for this subnet.",
 						},
 						"dns2": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:        schema.TypeString,
+							Optional:    true,
 							Description: "Optional secondary DNS server IP for this subnet.",
 						},
 						"description": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:        schema.TypeString,
+							Optional:    true,
 							Description: "Optional description of this subnet.",
 						},
 						"id": {
-							Type:     schema.TypeInt,
-							Computed: true,
+							Type:        schema.TypeInt,
+							Computed:    true,
 							Description: "The unique subnet ID.",
 						},
 					},
@@ -148,13 +154,13 @@ func resourceNetworkCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	firstSubnet := subnets[0].(map[string]interface{})
 	body := &createNetworkPostValues{
-		Datacenter: d.Get("datacenter_id").(string),
-		Name: d.Get("name").(string),
-		SubnetIp: firstSubnet["ip"].(string),
-		SubnetBit: firstSubnet["bit"].(int),
-		Gateway: firstSubnet["gateway"].(string),
-		Dns1: firstSubnet["dns1"].(string),
-		Dns2: firstSubnet["dns2"].(string),
+		Datacenter:        d.Get("datacenter_id").(string),
+		Name:              d.Get("name").(string),
+		SubnetIp:          firstSubnet["ip"].(string),
+		SubnetBit:         firstSubnet["bit"].(int),
+		Gateway:           firstSubnet["gateway"].(string),
+		Dns1:              firstSubnet["dns1"].(string),
+		Dns2:              firstSubnet["dns2"].(string),
 		SubnetDescription: firstSubnet["description"].(string),
 	}
 	result, err := request(provider, "POST", "service/network/create", body)
@@ -227,13 +233,13 @@ func resourceNetworkRead(ctx context.Context, d *schema.ResourceData, m interfac
 		subnet__ := subnet_.(map[string]interface{})
 		description := subnet__["subnetDescription"].(string)
 		subnets = append(subnets, map[string]interface{}{
-			"ip": subnet__["subnetIp"].(string),
-			"bit": subnet__["subnetBit"].(float64),
-			"gateway": subnet__["gateway"].(string),
-			"dns1": subnet__["dns1"].(string),
-			"dns2": subnet__["dns2"].(string),
+			"ip":          subnet__["subnetIp"].(string),
+			"bit":         subnet__["subnetBit"].(float64),
+			"gateway":     subnet__["gateway"].(string),
+			"dns1":        subnet__["dns1"].(string),
+			"dns2":        subnet__["dns2"].(string),
 			"description": description,
-			"id": subnet__["subnetId"].(float64),
+			"id":          subnet__["subnetId"].(float64),
 		})
 		subnetDescs[description] = true
 	}
@@ -307,7 +313,7 @@ func resourceNetworkDelete(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	body := &deleteNetworkPostValues{
 		Datacenter: d.Get("datacenter_id").(string),
-		Id: d.Get("network_id").(int),
+		Id:         d.Get("network_id").(int),
 	}
 	_, err := request(provider, "POST", "service/network/delete", body)
 	if err != nil {
@@ -333,22 +339,22 @@ func resourceNetworkImport(ctx context.Context, d *schema.ResourceData, m interf
 
 func isSubnetDifferent(subnet1 map[string]interface{}, subnet2 map[string]interface{}) bool {
 	return subnet1["ip"].(string) != subnet2["ip"].(string) ||
-			subnet1["bit"].(int) != subnet2["bit"].(int) ||
-			subnet1["gateway"].(string) != subnet2["gateway"].(string) ||
-			subnet1["dns1"].(string) != subnet2["dns1"].(string) ||
-			subnet1["dns2"].(string) != subnet2["dns2"].(string)
+		subnet1["bit"].(int) != subnet2["bit"].(int) ||
+		subnet1["gateway"].(string) != subnet2["gateway"].(string) ||
+		subnet1["dns1"].(string) != subnet2["dns1"].(string) ||
+		subnet1["dns2"].(string) != subnet2["dns2"].(string)
 }
 
 func editSubnet(provider *ProviderConfig, d *schema.ResourceData, subnet map[string]interface{}) diag.Diagnostics {
 	body := &editSubnetPostValues{
-		Datacenter: d.Get("datacenter_id").(string),
-		VlanId: d.Id(),
-		SubnetId: subnet["id"].(int),
-		SubnetIp: subnet["ip"].(string),
-		SubnetBit: subnet["bit"].(int),
-		Gateway: subnet["gateway"].(string),
-		Dns1: subnet["dns1"].(string),
-		Dns2: subnet["dns2"].(string),
+		Datacenter:        d.Get("datacenter_id").(string),
+		VlanId:            d.Id(),
+		SubnetId:          subnet["id"].(int),
+		SubnetIp:          subnet["ip"].(string),
+		SubnetBit:         subnet["bit"].(int),
+		Gateway:           subnet["gateway"].(string),
+		Dns1:              subnet["dns1"].(string),
+		Dns2:              subnet["dns2"].(string),
 		SubnetDescription: subnet["description"].(string),
 	}
 	_, err := request(provider, "POST", "service/network/subnet/edit", body)
@@ -357,7 +363,6 @@ func editSubnet(provider *ProviderConfig, d *schema.ResourceData, subnet map[str
 	}
 	return nil
 }
-
 
 func delSubnet(provider *ProviderConfig, d *schema.ResourceData, subnet map[string]interface{}) diag.Diagnostics {
 	body := &delSubnetPostValues{
@@ -370,16 +375,15 @@ func delSubnet(provider *ProviderConfig, d *schema.ResourceData, subnet map[stri
 	return nil
 }
 
-
 func addSubnet(provider *ProviderConfig, d *schema.ResourceData, subnet map[string]interface{}) (float64, diag.Diagnostics) {
 	body := &createSubnetPostValues{
-		Datacenter: d.Get("datacenter_id").(string),
-		VlanId: d.Id(),
-		SubnetIp: subnet["ip"].(string),
-		SubnetBit: subnet["bit"].(int),
-		Gateway: subnet["gateway"].(string),
-		Dns1: subnet["dns1"].(string),
-		Dns2: subnet["dns2"].(string),
+		Datacenter:        d.Get("datacenter_id").(string),
+		VlanId:            d.Id(),
+		SubnetIp:          subnet["ip"].(string),
+		SubnetBit:         subnet["bit"].(int),
+		Gateway:           subnet["gateway"].(string),
+		Dns1:              subnet["dns1"].(string),
+		Dns2:              subnet["dns2"].(string),
 		SubnetDescription: subnet["description"].(string),
 	}
 	result, err := request(provider, "POST", "service/network/subnet/create", body)
