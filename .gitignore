@@ -10,3 +10,4 @@ terraform
 .envrc
 .terraform.lock.hcl
 /.data/
+/coverage.out

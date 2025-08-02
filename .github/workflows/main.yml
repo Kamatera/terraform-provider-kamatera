@@ -6,6 +6,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.23
     - name: Test
       run: go test -v ./...
     - name: Build
@@ -111,11 +115,11 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Go
-        if: success()
+      - if: success()
+        name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16.x
+          go-version: 1.23
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Calc coverage
