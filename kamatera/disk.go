@@ -16,24 +16,28 @@ func (c cannotParseDiskValuesErr) Error() string {
 func calDiskChangeOperation(o, n interface{}) (diskOperation, error) {
 	op := diskOperation{}
 
-	var oldValues []float64
+	var oldValues []int
 	for _, v := range o.([]interface{}) {
-		val, ok := v.(float64)
-		if ok {
-			oldValues = append(oldValues, val)
-		} else {
+		switch v.(type) {
+		case float64:
+			oldValues = append(oldValues, int(v.(float64)))
+		case int:
+			oldValues = append(oldValues, v.(int))
+		default:
 			return diskOperation{}, cannotParseDiskValuesErr{
 				old: o,
 				new: n,
 			}
 		}
 	}
-	var newValues []float64
+	var newValues []int
 	for _, v := range n.([]interface{}) {
-		val, ok := v.(float64)
-		if ok {
-			newValues = append(newValues, val)
-		} else {
+		switch v.(type) {
+		case float64:
+			newValues = append(newValues, int(v.(float64)))
+		case int:
+			newValues = append(newValues, v.(int))
+		default:
 			return diskOperation{}, cannotParseDiskValuesErr{
 				old: o,
 				new: n,
@@ -70,7 +74,7 @@ func calDiskChangeOperation(o, n interface{}) (diskOperation, error) {
 
 		if v != newValues[i] {
 			if op.update == nil {
-				op.update = map[int]float64{}
+				op.update = map[int]int{}
 			}
 			op.update[i] = newValues[i]
 		}

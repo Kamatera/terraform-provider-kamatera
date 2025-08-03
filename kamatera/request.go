@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/go-cleanhttp"
@@ -100,9 +101,21 @@ func renameServer(provider *ProviderConfig, internalServerID string, name string
 }
 
 type diskOperation struct {
-	add    []float64
-	remove []int           // index
-	update map[int]float64 // map[index]newValue
+	add    []int
+	remove []int       // index
+	update map[int]int // map[index]newValue
+}
+
+func getCommandIdFromResult(result interface{}) string {
+	var commandId string
+	switch result.(type) {
+	case float64:
+		commandId = strconv.Itoa(int(result.(float64)))
+	default:
+		commandIds := result.([]interface{})
+		commandId = commandIds[0].(string)
+	}
+	return commandId
 }
 
 func changeDisks(provider *ProviderConfig, id string, operation diskOperation) error {
@@ -114,15 +127,14 @@ func changeDisks(provider *ProviderConfig, id string, operation diskOperation) e
 				"server/disk",
 				changeDisksPostValues{
 					ID:  id,
-					Add: fmt.Sprintf("%.0fgb", v),
+					Add: fmt.Sprintf("%vgb", v),
 				},
 			)
 			if err != nil {
 				return err
 			}
 
-			commandIds := result.([]interface{})
-			_, err = waitCommand(provider, commandIds[0].(string))
+			_, err = waitCommand(provider, getCommandIdFromResult(result))
 		}
 	}
 
@@ -141,8 +153,7 @@ func changeDisks(provider *ProviderConfig, id string, operation diskOperation) e
 				return err
 			}
 
-			commandIds := result.([]interface{})
-			_, err = waitCommand(provider, commandIds[0].(string))
+			_, err = waitCommand(provider, getCommandIdFromResult(result))
 		}
 	}
 
@@ -155,15 +166,14 @@ func changeDisks(provider *ProviderConfig, id string, operation diskOperation) e
 				changeDisksPostValues{
 					ID:     id,
 					Resize: fmt.Sprint(key),
-					Size:   fmt.Sprintf("%.0fgb", val),
+					Size:   fmt.Sprintf("%vgb", val),
 				},
 			)
 			if err != nil {
 				return err
 			}
 
-			commandIds := result.([]interface{})
-			_, err = waitCommand(provider, commandIds[0].(string))
+			_, err = waitCommand(provider, getCommandIdFromResult(result))
 		}
 	}
 
