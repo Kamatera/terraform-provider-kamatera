@@ -270,7 +270,7 @@ func resourceServerCustomizeDiff(ctx context.Context, d *schema.ResourceDiff, m 
 		for _, e := range errors {
 			errorMessages = append(errorMessages, e.Error())
 		}
-		return fmt.Errorf("invalid server configuration: %s", strings.Join(errorMessages, ", "))
+		return fmt.Errorf("invalid server configuration:\n\n%s", strings.Join(errorMessages, "\n\n"))
 	} else {
 		return nil
 	}
