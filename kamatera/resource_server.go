@@ -234,45 +234,50 @@ func resourceServer() *schema.Resource {
 }
 
 func resourceServerCustomizeDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
-	err := loadServerOptions()
-	if err != nil {
-		return fmt.Errorf("failed to load server options: %w", err)
-	}
-	var errors []error
-	err = serverOptionsValidateDatacenter(d.Get("datacenter_id").(string))
-	if err != nil {
-		errors = append(errors, err)
-	}
-	err = serverOptionsValidateCpu(fmt.Sprintf("%v%v", d.Get("cpu_cores"), d.Get("cpu_type")))
-	if err != nil {
-		errors = append(errors, err)
-	}
-	err = serverOptionsValidateRamMB(d.Get("cpu_type").(string), d.Get("ram_mb").(int))
-	if err != nil {
-		errors = append(errors, err)
-	}
-	for _, diskSize := range d.Get("disk_sizes_gb").([]interface{}) {
-		err = serverOptionsValidateDiskSizeGB(diskSize.(int))
-		if err != nil {
-			errors = append(errors, err)
-		}
-	}
-	if d.Get("billing_cycle").(string) == "monthly" {
-		err = serverOptionsValidateMonthlyTrafficPackage(d.Get("datacenter_id").(string), d.Get("monthly_traffic_package").(string))
-		if err != nil {
-			errors = append(errors, err)
-		}
-	} else if d.Get("billing_cycle").(string) != "hourly" {
-		errors = append(errors, fmt.Errorf("billing cycle must be either 'hourly' or 'monthly', got '%s'", d.Get("billing_cycle").(string)))
-	}
-	if len(errors) > 0 {
-		var errorMessages []string
-		for _, e := range errors {
-			errorMessages = append(errorMessages, e.Error())
-		}
-		return fmt.Errorf("invalid server configuration:\n\n%s", strings.Join(errorMessages, "\n\n"))
-	} else {
+	provider := m.(*ProviderConfig)
+	if provider.DisableValidations {
 		return nil
+	} else {
+		err := loadServerOptions()
+		if err != nil {
+			return fmt.Errorf("failed to load server options: %w", err)
+		}
+		var errors []error
+		err = serverOptionsValidateDatacenter(d.Get("datacenter_id").(string))
+		if err != nil {
+			errors = append(errors, err)
+		}
+		err = serverOptionsValidateCpu(fmt.Sprintf("%v%v", d.Get("cpu_cores"), d.Get("cpu_type")))
+		if err != nil {
+			errors = append(errors, err)
+		}
+		err = serverOptionsValidateRamMB(d.Get("cpu_type").(string), d.Get("ram_mb").(int))
+		if err != nil {
+			errors = append(errors, err)
+		}
+		for _, diskSize := range d.Get("disk_sizes_gb").([]interface{}) {
+			err = serverOptionsValidateDiskSizeGB(diskSize.(int))
+			if err != nil {
+				errors = append(errors, err)
+			}
+		}
+		if d.Get("billing_cycle").(string) == "monthly" {
+			err = serverOptionsValidateMonthlyTrafficPackage(d.Get("datacenter_id").(string), d.Get("monthly_traffic_package").(string))
+			if err != nil {
+				errors = append(errors, err)
+			}
+		} else if d.Get("billing_cycle").(string) != "hourly" {
+			errors = append(errors, fmt.Errorf("billing cycle must be either 'hourly' or 'monthly', got '%s'", d.Get("billing_cycle").(string)))
+		}
+		if len(errors) > 0 {
+			var errorMessages []string
+			for _, e := range errors {
+				errorMessages = append(errorMessages, e.Error())
+			}
+			return fmt.Errorf("invalid server configuration:\n\n%s", strings.Join(errorMessages, "\n\n"))
+		} else {
+			return nil
+		}
 	}
 }
 

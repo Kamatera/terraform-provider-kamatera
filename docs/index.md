@@ -28,3 +28,4 @@ Usage guide and examples are available [here](https://github.com/Kamatera/terraf
 ### Optional
 
 - `api_url` (String) Kamatera API Url
+- `disable_validations` (Boolean) Disable provider-side validations. Use with caution, as this may lead to invalid configurations being applied.

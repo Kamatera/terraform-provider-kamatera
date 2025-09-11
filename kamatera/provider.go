@@ -8,16 +8,17 @@ import (
 )
 
 type ProviderConfig struct {
-	ApiUrl      string
-	ApiClientID string
-	ApiSecret   string
+	ApiUrl             string
+	ApiClientID        string
+	ApiSecret          string
+	DisableValidations bool
 }
 
 // Provider -
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		ResourcesMap: map[string]*schema.Resource{
-			"kamatera_server": resourceServer(),
+			"kamatera_server":  resourceServer(),
 			"kamatera_network": resourceNetwork(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -44,6 +45,12 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("KAMATERA_API_URL", "https://cloudcli.cloudwm.com"),
 				Description: "Kamatera API Url",
 			},
+			"disable_validations": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Disable provider-side validations. Use with caution, as this may lead to invalid configurations being applied.",
+			},
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
@@ -53,10 +60,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	apiClientID := d.Get("api_client_id").(string)
 	apiSecret := d.Get("api_secret").(string)
 	apiURL := d.Get("api_url").(string)
+	disableValidations := d.Get("disable_validations").(bool)
 
 	return &ProviderConfig{
-		ApiUrl:      apiURL,
-		ApiClientID: apiClientID,
-		ApiSecret:   apiSecret,
+		ApiUrl:             apiURL,
+		ApiClientID:        apiClientID,
+		ApiSecret:          apiSecret,
+		DisableValidations: disableValidations,
 	}, nil
 }

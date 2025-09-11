@@ -1,7 +1,9 @@
 package kamatera
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
@@ -77,4 +79,16 @@ func TestResourceServerSchemaValidation(t *testing.T) {
 			assert.Equal(t, tt.expectedErrorStrings, errorStrings)
 		})
 	}
+}
+
+func TestResourceServerCustomizeDiffDisableValidations(t *testing.T) {
+	provider := &ProviderConfig{
+		ApiUrl:             "111",
+		ApiClientID:        "222",
+		ApiSecret:          "333",
+		DisableValidations: true,
+	}
+	mockDiff := &schema.ResourceDiff{}
+	err := resourceServer().CustomizeDiff(context.Background(), mockDiff, provider)
+	assert.Nil(t, err)
 }
